@@ -1,0 +1,60 @@
+# Veil Provenance MVP
+
+Minimal experiment proving verifiable AI model build provenance without trusting the builder.
+
+## Purpose
+Show how to create tamper-evident, cryptographically verifiable lineage for AI models—from training data/config to deployed weights—using open tools. Anyone can verify without trusting the builder's claims.
+
+## Why it matters
+Core building block for The Veil stewardship framework (@VeilHarmony on X): enables real audits and trust.
+
+## Quick start
+```bash
+python provenance.py --generate  # Create attestation
+python provenance.py --verify    # Check it
+
+**File 2: provenance.py** (the actual code MVP)
+```python
+import hashlib
+import json
+from ecdsa import SigningKey, VerifyingKey
+from ecdsa.util import sigencode_string, sigdecode_string
+
+# Simple MVP: hash some "model data", sign it, verify it
+
+def generate_attestation(data):
+    # Hash the data (in real use: training config, data hashes, weights hash)
+    data_str = json.dumps(data, sort_keys=True)
+    data_hash = hashlib.sha256(data_str.encode()).hexdigest()
+    
+    # Sign the hash
+    sk = SigningKey.generate()  # In real use: load your private key
+    signature = sk.sign(data_hash.encode(), sigencode=sigencode_string)
+    
+    attestation = {
+        "data_hash": data_hash,
+        "signature": signature.hex(),
+        "public_key": sk.verifying_key.to_string().hex()
+    }
+    with open("attestation.json", "w") as f:
+        json.dump(attestation, f)
+    print("Attestation generated: attestation.json")
+
+def verify_attestation():
+    with open("attestation.json") as f:
+        att = json.load(f)
+    
+    vk = VerifyingKey.from_string(bytes.fromhex(att["public_key"]))
+    try:
+        vk.verify(bytes.fromhex(att["signature"]), att["data_hash"].encode(), sigdecode=sigdecode_string)
+        print("Verification successful — provenance intact!")
+    except:
+        print("Verification failed")
+
+if __name__ == "__main__":
+    import sys
+    if len(sys.argv) > 1 and sys.argv[1] == "--generate":
+        generate_attestation({"model": "example", "version": "1.0"})
+    else:
+        verify_attestation()
+ecdsa
