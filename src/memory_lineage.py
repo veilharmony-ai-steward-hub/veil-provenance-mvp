@@ -100,3 +100,61 @@ class VeilMemoryChain:
             print(f"Export failed: {e}")
             return None
             "Add load_from_json with full tamper detection and verification"
+                def upload_to_arweave(self, wallet_path: str, tags: dict = None):
+        """Upload the full chain JSON to Arweave for permanent decentralized storage."""
+        try:
+            from arweave.arweave_lib import Wallet, Transaction
+            import arweave.arweave_lib as arweave_lib
+            
+            wallet = Wallet(wallet_path)
+            
+            # Serialize the full chain with metadata
+            export_data = {
+                "metadata": {
+                    "uploaded_at": datetime.now().isoformat(),
+                    "app": "VeilHarmony",
+                    "version": "0.4",
+                    "description": "Permanent human-AI memory lineage on Arweave permaweb"
+                },
+                "chain": self.chain
+            }
+            chain_json = json.dumps(export_data, indent=2)
+            
+            # Create transaction
+            tx = Transaction(
+                wallet,
+                data=chain_json.encode('utf-8')
+            )
+            
+            # Standard tags
+            tx.add_tag('App-Name', 'VeilHarmony')
+            tx.add_tag('App-Version', '0.4')
+            tx.add_tag('Content-Type', 'application/json')
+            tx.add_tag('VeilHarmony-Type', 'memory-lineage')
+            
+            # Custom tags if provided
+            if tags:
+                for key, value in tags.items():
+                    tx.add_tag(key, value)
+            
+            # Sign and send
+            tx.sign()
+            tx.send()
+            
+            permanent_url = f"https://arweave.net/{tx.id}"
+            print("\n=== Chain Permanently Stored on Arweave ===")
+            print(f"Transaction ID: {tx.id}")
+            print(f"Permanent Link: {permanent_url}")
+            print("Anyone can retrieve and verify this chain forever — no trust required.")
+            return permanent_url
+            
+        except ImportError:
+            print("Arweave library not installed. Run: pip install arweave-python-client")
+            return None
+        except FileNotFoundError:
+            print(f"Wallet file not found: {wallet_path}")
+            print("Generate a free Arweave wallet at https://arweave.net and fund with tiny AR.")
+            return None
+        except Exception as e:
+            print(f"Arweave upload failed: {e}")
+            return None
