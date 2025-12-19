@@ -79,3 +79,23 @@ class VeilMemoryChain:
         plt.axis('off')
         plt.tight_layout()
         plt.show()
+    def export_to_json(self, filename: str = "veil_chain.json"):
+        """Export the full chain to a verifiable JSON file."""
+        export_data = {
+            "metadata": {
+                "exported_at": datetime.now().isoformat(),
+                "app": "VeilHarmony",
+                "version": "0.3",
+                "description": "Tamper-proof human-AI memory lineage. Load and verify with VeilMemoryChain.load_from_json()"
+            },
+            "chain": self.chain
+        }
+        try:
+            with open(filename, 'w', encoding='utf-8') as f:
+                json.dump(export_data, f, indent=2, ensure_ascii=False)
+            print(f"Chain successfully exported to {filename}")
+            print(f"Anyone can now load and independently verify this file.")
+            return filename
+        except Exception as e:
+            print(f"Export failed: {e}")
+            return None
