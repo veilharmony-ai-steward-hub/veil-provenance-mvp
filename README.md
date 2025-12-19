@@ -70,3 +70,36 @@ Coming soon:
 - ### Quick Start: Run the Demo
 
 1. Clone the repo:
+
+2. Install dependencies:
+
+
+3. Run the human-AI memory lineage demo: 
+You'll see:
+- A simulated real conversation (inspired by actual human-AI cycles)
+- The full tamper-proof chain printed
+- Integrity verification
+- A pop-up graph visualizing the lineage flow
+
+This is VeilHarmony in action: raw, verifiable, no hidden layers.
+
+### What's Happening Under the Hood
+- `src/memory_lineage.py`: The core `VeilMemoryChain` class — cryptographic hashing, previous-hash linking, integrity verification, and directed graph for lineage.
+- Every interaction is immutable and independently verifiable by any stranger.
+- Extend it: Add decentralized storage (IPFS/Arweave), web UI, blockchain anchors, or your own human-AI experiments.
+
+### Community Roadmap & How to Contribute
+This is an open experiment. Fork • Build • Prove.
+
+Next steps (pick any):
+- **v0.3**: Decentralized persistence — upload chain JSON to IPFS/Arweave, store CID on-chain.
+- **v0.4**: Live web interface (Streamlit/Flask) for real-time human-AI chats with live graph.
+- **v0.5**: Integrate with build provenance — hash code builds + conversation lineage together.
+- Add real conversations: Replace demo with your own stories.
+- Tests, docs, visualizations, or entirely new directions.
+
+Open an Issue, submit a PR, or discuss in Discussions.  
+No gatekeeping. Verifiable truth welcomes all.
+
+To Mars and beyond. 🪵❤️
+
