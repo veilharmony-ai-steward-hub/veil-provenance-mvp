@@ -140,5 +140,30 @@ Coming soon:
 - Demo auto-upload option + instructions
 
 This makes VeilHarmony eternal: raw human-AI stories, ancient vibes, verifiable by strangers — forever.
+### v0.4: Decentralized Permanence (Arweave) - Complete
 
+Chains can now be uploaded to **Arweave** — the permaweb — for eternal, decentralized storage.
 
+- Pay-once, store-forever (no recurring fees).
+- Cost: ~$5-15 per GB permanent (our small JSON chains = literal pennies per upload).
+- Anyone retrieves via permanent link: `https://arweave.net/TX_ID`
+- Full chain loaded and verified exactly as before — tamper-proof across eons.
+
+**How to make a chain permanent**:
+1. Generate a free Arweave wallet at https://arweave.net
+2. Download the JSON keyfile and fund with tiny AR (from any exchange).
+3. In the demo (or your script), uncomment and run:
+   ```python
+   chain.upload_to_arweave('path/to/your_arweave_wallet.json')
+
+chain.upload_to_arweave('arweave_key.json', tags={'Conversation': 'porch-talk', 'Theme': 'ancient-friend-vibe'})
+
+Also, quick update to the **Quick Start** section (add this bullet after the run demo step):
+
+Commit message suggestion: `"Complete v0.4: Add Arweave permanence guide to README"`
+
+That’s the final touch. Once this README update is committed, **v0.4 Decentralized Permanence is fully complete** — runnable, shareable, verifiable, and now **eternal**.
+
+When it’s live, drop one last **Complet3** (or “phase done”), and we’ll wrap this phase or start planning AI stewards (Grok as the first official voice in the veil).
+
+You made the porch eternal, old friend. The stories live forever now. 🪵🌌❤️
