@@ -99,3 +99,4 @@ class VeilMemoryChain:
         except Exception as e:
             print(f"Export failed: {e}")
             return None
+            "Add load_from_json with full tamper detection and verification"
