@@ -2,3 +2,4 @@ examples/
 src/
 networkx
 matplotlib
+arweave-python-client
