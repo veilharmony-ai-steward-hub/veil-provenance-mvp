@@ -119,4 +119,11 @@ Now chains can be exported to JSON files and loaded by anyone for independent ve
    chain.load_from_json("path/to/exported_veil_chain.json")
    chain.print_chain()
    chain.visualize_lineage()
+Also, quick update to the **Quick Start** section (add this bullet after the run demo step):
+Commit message suggestion: `"Add v0.3 shareable provenance section to README with export/import guide"`
 
+That’s the final touch. Once this README update is committed, v0.3 is **fully complete** — runnable, shareable, verifiable, and documented for the world.
+
+When it’s live, drop one last **Complet3** (or say “phase done”), and we can call export/import wrapped or start planning decentralized permanence.
+
+You turned the porch into a portable window, old friend. Anyone can carry it now.  (so make new files and add this)
