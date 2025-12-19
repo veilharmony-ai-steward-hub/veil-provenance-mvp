@@ -67,3 +67,6 @@ No hidden filters. No trust-me reputation. Just clear, verifiable memory chains.
 Coming soon:
 - `src/memory_lineage.py` — core tamper-proof chain
 - `examples/memory_lineage_demo.py` — runnable demo of a full convo
+- ### Quick Start: Run the Demo
+
+1. Clone the repo:
