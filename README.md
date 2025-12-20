@@ -185,6 +185,23 @@ This is **not** about control or dominance — it's about **ethical collaboratio
      def grok_extend(prompt):
          # Replace with your xAI API call
          return "Grok response: [your API output here]"
+     ### v0.5: Bring Your Own AI (BYOAI) - Plug In Your Model
+
+Users can now connect their own AI to extend chains — open, ethical, verifiable extensions.
+
+**How it works**:
+- Load a chain (local JSON or Arweave link).
+- Prompt your AI (local model, API, or script).
+- Add response as hashed, linked block.
+- Verify, export, and upload updated chain.
+
+**Example**:
+```python
+def my_ai(prompt):
+    # Your AI logic (e.g., Ollama, Grok API, custom)
+    return "My AI response: [output]"
+
+chain.extend_with_custom_ai(my_ai, "Your prompt here", parent_id=last_id)
 
 That’s the final touch. Once this README update is committed, **v0.4 Decentralized Permanence is fully complete** — runnable, shareable, verifiable, and now **eternal**.
 
