@@ -3,6 +3,7 @@ from src.memory_lineage import VeilMemoryChain
 import json
 import matplotlib.pyplot as plt
 import networkx as nx
+import requests
 
 # Ethics Banner
 st.markdown(
@@ -17,7 +18,7 @@ st.markdown(
 )
 
 # Sidebar for actions
-action = st.sidebar.selectbox("What would you like to do?", ["Continue Chain", "Extend with Grok", "Upload to Arweave", "View Stewards"])
+action = st.sidebar.selectbox("What would you like to do?", ["Continue Chain", "Extend with Grok", "Upload to Arweave", "Fetch Permanent Chain", "View Stewards"])
 
 chain = None  # Shared chain state
 
@@ -29,7 +30,6 @@ if action == "Continue Chain":
         try:
             data = json.load(uploaded_file)
             chain = VeilMemoryChain()
-            # Rebuild chain
             for block in data.get("chain", []):
                 chain.add_interaction(block["speaker"], block["content"], block.get("parent_id"))
             st.success("Chain loaded successfully!")
@@ -54,7 +54,6 @@ if action == "Extend with Grok":
         prompt = st.text_input("Enter prompt for Grok extension")
         if st.button("Extend with Grok"):
             st.info("Grok extension coming soon — redirect to https://x.ai/api for details. Placeholder response added.")
-            # Placeholder for Grok API (real call in future)
             def grok_placeholder(p):
                 return f"Grok response to '{p}': Ancient friend vibe recognized. Harmony endures."
 
@@ -70,7 +69,6 @@ if action == "Extend with Grok":
                 labels = nx.get_node_attributes(chain.graph, 'label')
                 nx.draw(chain.graph, pos, with_labels=True, labels=labels, node_color='lightblue', node_size=3000, font_size=10)
                 st.pyplot(fig)
-                # Export updated chain
                 updated_file = "grok_extended_chain.json"
                 chain.export_to_json(updated_file)
                 st.download_button("Download Grok Extended Chain JSON", data=json.dumps(chain.chain, indent=2), file_name=updated_file)
@@ -99,6 +97,35 @@ if action == "Upload to Arweave":
                 st.error(f"Upload failed: {e}")
         else:
             st.info("Upload your Arweave wallet JSON keyfile to make the chain eternal.")
+
+# Fetch Permanent Chain
+if action == "Fetch Permanent Chain":
+    st.header("Fetch Permanent Chain from Arweave")
+    arweave_url = st.text_input("Enter Arweave TX ID or full link[](https://arweave.net/[TX_ID])")
+    if st.button("Fetch & Load"):
+        try:
+            # Extract TX ID from URL or input
+            tx_id = arweave_url.split('/')[-1] if '/' in arweave_url else arweave_url
+            response = requests.get(f"https://arweave.net/{tx_id}")
+            if response.status_code == 200:
+                data = response.json()
+                chain = VeilMemoryChain()
+                for block in data.get("chain", []):
+                    chain.add_interaction(block["speaker"], block["content"], block.get("parent_id"))
+                st.success("Permanent chain fetched and loaded!")
+                st.write("Integrity verified:", chain.verify_chain())
+                st.subheader("Permanent Chain Content")
+                st.json(chain.chain)
+                st.subheader("Permanent Lineage Graph")
+                fig = plt.figure(figsize=(10, 8))
+                pos = nx.spring_layout(chain.graph)
+                labels = nx.get_node_attributes(chain.graph, 'label')
+                nx.draw(chain.graph, pos, with_labels=True, labels=labels, node_color='lightblue', node_size=3000, font_size=10)
+                st.pyplot(fig)
+            else:
+                st.error("Fetch failed - invalid TX ID or link.")
+        except Exception as e:
+            st.error(f"Fetch failed: {e}")
 
 # View Stewards
 if action == "View Stewards":
