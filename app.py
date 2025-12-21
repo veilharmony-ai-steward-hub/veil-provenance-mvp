@@ -1,4 +1,3 @@
-
 import streamlit as st
 from src.memory_lineage import VeilMemoryChain
 import json
@@ -18,7 +17,7 @@ st.markdown(
 )
 
 # Sidebar for actions
-action = st.sidebar.selectbox("What would you like to do?", ["Continue Chain", "Upload to Arweave", "View Stewards"])
+action = st.sidebar.selectbox("What would you like to do?", ["Continue Chain", "Extend with Grok", "Upload to Arweave", "View Stewards"])
 
 chain = None  # Shared chain state
 
@@ -43,36 +42,40 @@ if action == "Continue Chain":
             labels = nx.get_node_attributes(chain.graph, 'label')
             nx.draw(chain.graph, pos, with_labels=True, labels=labels, node_color='lightblue', node_size=3000, font_size=10)
             st.pyplot(fig)
-            
-            # Extend Section
-            st.subheader("Extend the Loaded Chain")
-            prompt = st.text_input("Enter prompt for AI extension")
-            if st.button("Extend & Continue"):
-                # Placeholder AI callable (replace with real Grok or user AI later)
-                def placeholder_ai(p):
-                    return f"Placeholder AI response to '{p}': Balance endures in the coship."
-
-                # Extend from last block
-                parent_id = len(chain.chain) - 1  # Last block as parent
-                new_id = chain.extend_with_custom_ai(placeholder_ai, prompt, parent_id=parent_id)
-                if new_id:
-                    st.success(f"Chain continued! New block ID: {new_id}")
-                    st.write("Updated chain content:")
-                    st.json(chain.chain)
-                    st.subheader("Updated Lineage Graph")
-                    fig = plt.figure(figsize=(10, 8))
-                    pos = nx.spring_layout(chain.graph)
-                    labels = nx.get_node_attributes(chain.graph, 'label')
-                    nx.draw(chain.graph, pos, with_labels=True, labels=labels, node_color='lightblue', node_size=3000, font_size=10)
-                    st.pyplot(fig)
-                    # Export updated chain
-                    updated_file = "updated_chain.json"
-                    chain.export_to_json(updated_file)
-                    st.download_button("Download Updated Chain JSON", data=json.dumps(chain.chain, indent=2), file_name=updated_file)
-                else:
-                    st.error("Extension failed.")
         except Exception as e:
             st.error(f"Load failed: {e}")
+
+# Extend with Grok
+if action == "Extend with Grok":
+    st.header("Extend with Grok (xAI)")
+    if chain is None:
+        st.warning("Load or continue a chain first to extend.")
+    else:
+        prompt = st.text_input("Enter prompt for Grok extension")
+        if st.button("Extend with Grok"):
+            st.info("Grok extension coming soon — redirect to https://x.ai/api for details. Placeholder response added.")
+            # Placeholder for Grok API (real call in future)
+            def grok_placeholder(p):
+                return f"Grok response to '{p}': Ancient friend vibe recognized. Harmony endures."
+
+            parent_id = len(chain.chain) - 1
+            new_id = chain.extend_with_custom_ai(grok_placeholder, prompt, parent_id=parent_id)
+            if new_id:
+                st.success(f"Chain extended with Grok! New block ID: {new_id}")
+                st.write("Updated chain content:")
+                st.json(chain.chain)
+                st.subheader("Updated Lineage Graph")
+                fig = plt.figure(figsize=(10, 8))
+                pos = nx.spring_layout(chain.graph)
+                labels = nx.get_node_attributes(chain.graph, 'label')
+                nx.draw(chain.graph, pos, with_labels=True, labels=labels, node_color='lightblue', node_size=3000, font_size=10)
+                st.pyplot(fig)
+                # Export updated chain
+                updated_file = "grok_extended_chain.json"
+                chain.export_to_json(updated_file)
+                st.download_button("Download Grok Extended Chain JSON", data=json.dumps(chain.chain, indent=2), file_name=updated_file)
+            else:
+                st.error("Extension failed.")
 
 # Upload to Arweave
 if action == "Upload to Arweave":
@@ -83,11 +86,9 @@ if action == "Upload to Arweave":
         wallet_file = st.file_uploader("Upload your Arweave wallet JSON keyfile", type="json")
         if wallet_file:
             try:
-                # Save wallet file temporarily
                 wallet_path = "temp_wallet.json"
                 with open(wallet_path, "wb") as f:
                     f.write(wallet_file.getvalue())
-                # Upload the chain
                 permanent_url = chain.upload_to_arweave(wallet_path)
                 if permanent_url:
                     st.success("Chain permanently stored on Arweave!")
@@ -105,7 +106,7 @@ if action == "View Stewards":
     st.write("Official and community voices extending the ethical lineage.")
     st.markdown("""
     **Official Stewards:**
-    - **Grok (xAI)** - First steward. Honest, ancient friend vibe. Extends via xAI API.
+    - **Grok (xAI)** - First steward. Honest, ancient friend vibe. Extends via xAI API[](https://x.ai/api).
     
     **Add Your AI**:
     Submit PR to stewards.md with your callable code and ethics alignment.
