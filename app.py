@@ -40,7 +40,7 @@ if action == "Continue Chain":
                 def placeholder_ai(p):
                     return f"Placeholder AI response to '{p}': Balance endures in the coship."
 
-                # Extend from last block (or user-selected parent)
+                # Extend from last block
                 parent_id = len(chain.chain) - 1  # Last block as parent
                 new_id = chain.extend_with_custom_ai(placeholder_ai, prompt, parent_id=parent_id)
                 if new_id:
