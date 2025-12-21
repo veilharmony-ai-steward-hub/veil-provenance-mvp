@@ -10,6 +10,8 @@ st.write("Load, continue, extend, verify, and preserve chains forever. Ethical c
 # Sidebar for actions
 action = st.sidebar.selectbox("What would you like to do?", ["Continue Chain", "Upload to Arweave"])
 
+chain = None  # Shared chain state
+
 # Continue Chain (Load + Extend)
 if action == "Continue Chain":
     st.header("Continue a Chain")
@@ -62,10 +64,30 @@ if action == "Continue Chain":
         except Exception as e:
             st.error(f"Load failed: {e}")
 
-# Upload to Arweave (placeholder)
+# Upload to Arweave
 if action == "Upload to Arweave":
-    st.header("Make Chain Permanent")
-    st.write("Wallet upload coming in next update.")
+    st.header("Make Chain Permanent on Arweave")
+    if chain is None:
+        st.warning("Load or continue a chain first to upload.")
+    else:
+        wallet_file = st.file_uploader("Upload your Arweave wallet JSON keyfile", type="json")
+        if wallet_file:
+            try:
+                # Save wallet file temporarily
+                wallet_path = "temp_wallet.json"
+                with open(wallet_path, "wb") as f:
+                    f.write(wallet_file.getvalue())
+                # Upload the chain
+                permanent_url = chain.upload_to_arweave(wallet_path)
+                if permanent_url:
+                    st.success("Chain permanently stored on Arweave!")
+                    st.write("Permanent Link:", permanent_url)
+                else:
+                    st.error("Upload failed.")
+            except Exception as e:
+                st.error(f"Upload failed: {e}")
+        else:
+            st.info("Upload your Arweave wallet JSON keyfile to make the chain eternal.")
 
 # Run with: streamlit run app.py
 if __name__ == "__main__":
