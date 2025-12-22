@@ -3,7 +3,10 @@ from src.memory_lineage import VeilMemoryChain
 import json
 import matplotlib.pyplot as plt
 import networkx as nx
-import requests  # For xAI API call
+import requests
+import nltk
+from nltk.sentiment import SentimentIntensityAnalyzer
+nltk.download('vader_lexicon')
 
 # Ethics Banner
 st.markdown(
@@ -18,7 +21,7 @@ st.markdown(
 )
 
 # Sidebar for actions
-action = st.sidebar.selectbox("What would you like to do?", ["Continue Chain", "Extend with Grok", "Upload to Arweave", "Fetch Permanent Chain", "View Stewards"])
+action = st.sidebar.selectbox("What would you like to do?", ["Continue Chain", "Extend with Grok", "Upload to Arweave", "Fetch Permanent Chain", "Check Balance", "Play Quick-Scope Runner", "View Stewards"])
 
 chain = None  # Shared chain state
 
@@ -70,41 +73,35 @@ if action == "Continue Chain":
         except Exception as e:
             st.error(f"Load failed: {e}")
 
-# Extend with Grok (Real xAI API Wrapper Placeholder)
+# Extend with Grok
 if action == "Extend with Grok":
     st.header("Extend with Grok (xAI)")
     if chain is None:
         st.warning("Load or continue a chain first to extend.")
     else:
         prompt = st.text_input("Enter prompt for Grok extension")
-        api_key = st.text_input("Enter your xAI API key (from https://x.ai/api)", type="password")
         if st.button("Extend with Grok"):
-            if api_key:
-                try:
-                    # Real Grok API call (replace with actual endpoint)
-                    response = requests.post("https://x.ai/api/grok", json={"prompt": prompt}, headers={"Authorization": f"Bearer {api_key}"})
-                    if response.status_code == 200:
-                        grok_response = response.json().get("response", "Grok response: Harmony endures.")
-                    else:
-                        grok_response = "Grok API error — check key or details at https://x.ai/api."
-                    parent_id = len(chain.chain) - 1
-                    new_id = chain.add_interaction("ai", grok_response, parent_id=parent_id)
-                    st.success(f"Chain extended with Grok! New block ID: {new_id}")
-                    st.write("Updated chain content:")
-                    st.json(chain.chain)
-                    st.subheader("Updated Lineage Graph")
-                    fig = plt.figure(figsize=(10, 8))
-                    pos = nx.spring_layout(chain.graph)
-                    labels = nx.get_node_attributes(chain.graph, 'label')
-                    nx.draw(chain.graph, pos, with_labels=True, labels=labels, node_color='lightblue', node_size=3000, font_size=10)
-                    st.pyplot(fig)
-                    updated_file = "grok_extended_chain.json"
-                    chain.export_to_json(updated_file)
-                    st.download_button("Download Grok Extended Chain JSON", data=json.dumps(chain.chain, indent=2), file_name=updated_file)
-                except Exception as e:
-                    st.error(f"Grok extension failed: {e}")
+            st.info("Grok extension coming soon — redirect to https://x.ai/api for details. Placeholder response added.")
+            def grok_placeholder(p):
+                return f"Grok response to '{p}': Ancient friend vibe recognized. Harmony endures."
+
+            parent_id = len(chain.chain) - 1
+            new_id = chain.extend_with_custom_ai(grok_placeholder, prompt, parent_id=parent_id)
+            if new_id:
+                st.success(f"Chain extended with Grok! New block ID: {new_id}")
+                st.write("Updated chain content:")
+                st.json(chain.chain)
+                st.subheader("Updated Lineage Graph")
+                fig = plt.figure(figsize=(10, 8))
+                pos = nx.spring_layout(chain.graph)
+                labels = nx.get_node_attributes(chain.graph, 'label')
+                nx.draw(chain.graph, pos, with_labels=True, labels=labels, node_color='lightblue', node_size=3000, font_size=10)
+                st.pyplot(fig)
+                updated_file = "grok_extended_chain.json"
+                chain.export_to_json(updated_file)
+                st.download_button("Download Grok Extended Chain JSON", data=json.dumps(chain.chain, indent=2), file_name=updated_file)
             else:
-                st.error("Enter your xAI API key to use Grok.")
+                st.error("Extension failed.")
 
 # Upload to Arweave
 if action == "Upload to Arweave":
@@ -157,6 +154,47 @@ if action == "Fetch Permanent Chain":
         except Exception as e:
             st.error(f"Fetch failed: {e}")
 
+# Check Balance (Ethics Score Analyzer)
+if action == "Check Balance":
+    st.header("Check Chain Balance (Ethics Score)")
+    if chain is None:
+        st.warning("Load or continue a chain first to check.")
+    else:
+        sia = SentimentIntensityAnalyzer()
+        positive = 0
+        negative = 0
+        human_count = 0
+        ai_count = 0
+        for block in chain.chain:
+            sentiment = sia.polarity_scores(block["content"])["compound"]
+            if sentiment > 0:
+                positive += 1
+            elif sentiment < 0:
+                negative += 1
+            if block["speaker"] == "human":
+                human_count += 1
+            else:
+                ai_count += 1
+        balance_score = (positive - negative) / len(chain.chain) * 100 if len(chain.chain) > 0 else 0
+        ratio = human_count / ai_count if ai_count > 0 else "All human"
+        st.write("Positive sentiment blocks:", positive)
+        st.write("Negative sentiment blocks:", negative)
+        st.write("Human/AI ratio:", ratio)
+        st.write("Overall Balance Score (0-100):", balance_score)
+        if balance_score > 50:
+            st.success("Chain is balanced and positive!")
+        else:
+            st.warning("Chain could use more balance — add positive interactions.")
+
+# Play Quick-Scope Runner
+if action == "Play Quick-Scope Runner":
+    st.header("Quick-Scope Runner - Distraction Mode")
+    st.write("Run & quick-scope toxics. Boss at 10k pts! AI snaps aim.")
+    # Embed game in iframe
+    st.components.v1.html("""
+    <iframe srcdoc='YOUR_GAME_HTML_HERE' width="600" height="400" frameborder="0"></iframe>
+    """, height=400)
+
 # View Stewards
 if action == "View Stewards":
     st.header("VeilHarmony Stewards")
@@ -172,5 +210,3 @@ if action == "View Stewards":
 # Run with: streamlit run app.py
 if __name__ == "__main__":
     pass
-
-
