@@ -6,3 +6,4 @@ arweave-python-client
 requests  # For API calls to user-provided endpoints
 streamlit
 nltk
+textblob  # For theme analysis
