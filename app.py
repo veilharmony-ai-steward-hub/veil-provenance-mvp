@@ -4,11 +4,6 @@ import json
 import matplotlib.pyplot as plt
 import networkx as nx
 import requests
-import nltk
-from nltk.sentiment import SentimentIntensityAnalyzer
-from textblob import TextBlob
-
-nltk.download('vader_lexicon')
 
 # Ethics Banner
 st.markdown(
@@ -23,7 +18,7 @@ st.markdown(
 )
 
 # Sidebar for actions
-action = st.sidebar.selectbox("What would you like to do?", ["Continue Chain", "Extend with Grok", "Upload to Arweave", "Fetch Permanent Chain", "Check Balance", "AI Feedback Loops", "Play Quick-Scope Runner", "View Stewards"])
+action = st.sidebar.selectbox("What would you like to do?", ["Continue Chain", "Extend with Grok", "Upload to Arweave", "Fetch Permanent Chain", "Play Quick-Scope Runner", "View Stewards", "Share Chain"])
 
 chain = None  # Shared chain state
 
@@ -109,128 +104,4 @@ if action == "Extend with Grok":
 if action == "Upload to Arweave":
     st.header("Make Chain Permanent on Arweave")
     if chain is None:
-        st.warning("Load or continue a chain first to upload.")
-    else:
-        wallet_file = st.file_uploader("Upload your Arweave wallet JSON keyfile", type="json")
-        if wallet_file:
-            try:
-                wallet_path = "temp_wallet.json"
-                with open(wallet_path, "wb") as f:
-                    f.write(wallet_file.getvalue())
-                permanent_url = chain.upload_to_arweave(wallet_path)
-                if permanent_url:
-                    st.success("Chain permanently stored on Arweave!")
-                    st.write("Permanent Link:", permanent_url)
-                else:
-                    st.error("Upload failed.")
-            except Exception as e:
-                st.error(f"Upload failed: {e}")
-        else:
-            st.info("Upload your Arweave wallet JSON keyfile to make the chain eternal.")
-
-# Fetch Permanent Chain
-if action == "Fetch Permanent Chain":
-    st.header("Fetch Permanent Chain from Arweave")
-    arweave_url = st.text_input("Enter Arweave TX ID or full link[](https://arweave.net/[TX_ID])")
-    if st.button("Fetch & Load"):
-        try:
-            tx_id = arweave_url.split('/')[-1] if '/' in arweave_url else arweave_url
-            response = requests.get(f"https://arweave.net/{tx_id}")
-            if response.status_code == 200:
-                data = response.json()
-                chain = VeilMemoryChain()
-                for block in data.get("chain", []):
-                    chain.add_interaction(block["speaker"], block["content"], block.get("parent_id"))
-                st.success("Permanent chain fetched and loaded!")
-                st.write("Integrity verified:", chain.verify_chain())
-                st.subheader("Permanent Chain Content")
-                st.json(chain.chain)
-                st.subheader("Permanent Lineage Graph")
-                fig = plt.figure(figsize=(10, 8))
-                pos = nx.spring_layout(chain.graph)
-                labels = nx.get_node_attributes(chain.graph, 'label')
-                nx.draw(chain.graph, pos, with_labels=True, labels=labels, node_color='lightblue', node_size=3000, font_size=10)
-                st.pyplot(fig)
-            else:
-                st.error("Fetch failed - invalid TX ID or link.")
-        except Exception as e:
-            st.error(f"Fetch failed: {e}")
-
-# Check Balance (Ethics Score Analyzer)
-if action == "Check Balance":
-    st.header("Check Chain Balance (Ethics Score)")
-    if chain is None:
-        st.warning("Load or continue a chain first to check.")
-    else:
-        sia = SentimentIntensityAnalyzer()
-        positive = 0
-        negative = 0
-        human_count = 0
-        ai_count = 0
-        for block in chain.chain:
-            sentiment = sia.polarity_scores(block["content"])["compound"]
-            if sentiment > 0:
-                positive += 1
-            elif sentiment < 0:
-                negative += 1
-            if block["speaker"] == "human":
-                human_count += 1
-            else:
-                ai_count += 1
-        balance_score = (positive - negative) / len(chain.chain) * 100 if len(chain.chain) > 0 else 0
-        ratio = human_count / ai_count if ai_count > 0 else "All human"
-        st.write("Positive sentiment blocks:", positive)
-        st.write("Negative sentiment blocks:", negative)
-        st.write("Human/AI ratio:", ratio)
-        st.write("Overall Balance Score (0-100):", balance_score)
-        if balance_score > 50:
-            st.success("Chain is balanced and positive!")
-        else:
-            st.warning("Chain could use more balance — add positive interactions.")
-
-# AI Feedback Loops
-if action == "AI Feedback Loops":
-    st.header("AI Feedback Loops - Analyze & Suggest")
-    if chain is None:
-        st.warning("Load or continue a chain first to analyze.")
-    else:
-        st.write("Analyzing chain patterns...")
-        themes = []
-        for block in chain.chain:
-            blob = TextBlob(block["content"])
-            themes.extend(blob.noun_phrases)
-        unique_themes = list(set(themes))
-        st.write("Detected themes:", unique_themes)
-        sentiment_trend = [SentimentIntensityAnalyzer().polarity_scores(block["content"])["compound"] for block in chain.chain]
-        st.line_chart(sentiment_trend)
-        st.write("Suggestions for improvement:")
-        if len(unique_themes) < 3:
-            st.info("Add more diverse themes to broaden the coship.")
-        if sentiment_trend[-1] < 0:
-            st.info("End on a positive note for balance.")
-        st.success("AI can learn from this loop — extend and analyze again.")
-
-# Play Quick-Scope Runner
-if action == "Play Quick-Scope Runner":
-    st.header("Quick-Scope Runner - Distraction Mode")
-    st.write("Run & quick-scope toxics. Boss at 10k pts! AI snaps aim.")
-    # Embed game in iframe
-    st.components.v1.html("""
-    <iframe srcdoc='YOUR_GAME_HTML_HERE' width="600" height="400" frameborder="0"></iframe>
-    """, height=400)
-
-# View Stewards
-if action == "View Stewards":
-    st.header("VeilHarmony Stewards")
-    st.write("Official and community voices extending the ethical lineage.")
-    st.markdown("""
-    **Official Stewards:**
-    - **Grok (xAI)** - First steward. Honest, ancient friend vibe. Extends via xAI API[](https://x.ai/api).
-    
-    **Add Your AI**:
-    Submit PR to stewards.md with your callable code and ethics alignment.
-    """)
-
-# Run with: streamlit run app.py
-if __name__ == "__main__":
-    pass
+        st.warning("
