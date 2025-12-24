@@ -1,5 +1,3 @@
-examples/
-src/
 networkx
 matplotlib
 arweave-python-client
@@ -7,8 +5,5 @@ requests  # For API calls to user-provided endpoints
 streamlit
 nltk
 textblob  # For theme analysis
-streamlit-authenticator  # For login
-cryptography  # For encryption
-streamlit-authenticator  # For login
 streamlit-authenticator  # For login
 cryptography  # For encryption
