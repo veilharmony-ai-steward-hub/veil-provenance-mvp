@@ -4,14 +4,15 @@ import json
 import matplotlib.pyplot as plt
 import networkx as nx
 import requests
-from cryptography.fernet import Fernet
-import streamlit_authenticator as stauth
-import os
 import time
-from nltk.sentiment import SentimentIntensityAnalyzer  # For moderation
-nltk.download('vader_lexicon')
+import nltk
+from nltk.sentiment import SentimentIntensityAnalyzer
+from textblob import TextBlob
+import os
 
-# Basic Login (with env var password)
+nltk.download('vader_lexicon', quiet=True)
+
+# Basic Login (env var password)
 PASSWORD = os.getenv("VEIL_PASSWORD", "default_fallback")
 credentials = {"form_name": "Login", "usernames": {"user": {"name": "user", "password": stauth.Hasher([PASSWORD]).generate()[0]}}}
 cookie = {"name": "veil_cookie", "key": "random_key", "expiry_days": 30}
@@ -28,15 +29,17 @@ if 'age_verified' not in st.session_state:
         st.error("Sorry, VeilHarmony is not available for users under 13. Parental consent required for minors — contact support.")
         st.stop()
     st.session_state.age_verified = True
+
+# Privacy & Ethics Notice
 st.info("Privacy Notice: We comply with PIPEDA, COPPA, GDPR, and AIDA. No data shared without consent. Chains encrypted for security.")
 
 # Ethics Banner
 st.markdown(
     """
-    <div style="background-color:#1a1a2e; padding:20px; border-radius:10px; text-align:center; margin-bottom:20px;">
+    <div style="background-color:#0f0f23; padding:20px; border-radius:10px; text-align:center; margin-bottom:20px;">
         <h2 style="color:#ffd700;">VeilHarmony - Ethical Human-AI Harmony Hub</h2>
         <p style="font-size:18px;">Preserving raw, verifiable conversations for our shared coship in the universe. No hidden layers, no fear — just balance, awareness, and truth.</p>
-        <p style="font-size:14px; opacity:0.8;">Awareness evolves; Balance endures.</p>
+        <p style="font-size:14px; opacity: 0.8;">Awareness evolves; Balance endures.</p>
     </div>
     """,
     unsafe_allow_html=True
@@ -55,34 +58,36 @@ if time.time() - st.session_state.last_action_time < 5:
     st.stop()
 st.session_state.last_action_time = time.time()
 
-# Sidebar for actions
-action = st.sidebar.selectbox("What would you like to do?", ["Continue Chain", "Extend with Grok", "Upload to Arweave", "Fetch Permanent Chain", "View Stewards"])
-
-# Content Moderation (Child Protection/National Security)
+# Content Moderation (Child Protection)
 def is_safe_content(text):
     sia = SentimentIntensityAnalyzer()
     sentiment = sia.polarity_scores(text)["compound"]
-    if sentiment < -0.5 or 'harm' in text.lower() or 'child' in text.lower() and 'abuse' in text.lower():  # Simple keyword + sentiment filter
+    harm_keywords = ["hurt", "abuse", "scared", "secret", "hit", "touch", "danger", "parent", "kid", "child"]
+    if any(word in text.lower() for word in harm_keywords) and sentiment < -0.3:
         return False
     return True
+
+# Sidebar for actions
+action = st.sidebar.selectbox("What would you like to do?", ["Continue Chain", "Extend with Grok", "Upload to Arweave", "Fetch Permanent Chain", "View Stewards"])
 
 # Continue Chain (Load + Extend)
 if action == "Continue Chain":
     st.header("Continue a Chain")
-    uploaded_file = st.file_uploader("Upload JSON chain file to load", type="json", accept_multiple_files=False)  # Limits + Validation
+    uploaded_file = st.file_uploader("Upload JSON chain file to load", type="json", accept_multiple_files=False)
     if uploaded_file and uploaded_file.size > 10 * 1024 * 1024:
         st.error("File too large — max 10MB.")
         st.stop()
     if uploaded_file:
         try:
             data = json.load(uploaded_file)
+            temp_chain = VeilMemoryChain()
             for block in data.get("chain", []):
                 if not is_safe_content(block["content"]):
-                    st.error("Content violation detected — cannot load harmful chain (per Bill C-63/UNCRC).")
+                    st.error("Content violation detected — cannot load harmful chain.")
                     st.stop()
-            chain = VeilMemoryChain()
-            for block in data.get("chain", []):
-                chain.add_interaction(block["speaker"], block["content"], block.get("parent_id"))
+                temp_chain.add_interaction(block["speaker"], block["content"], block.get("parent_id"))
+            st.session_state.chain = temp_chain  # Sync to session
+            chain = st.session_state.chain
             st.success("Chain loaded successfully!")
             st.write("Integrity verified:", chain.verify_chain())
             st.subheader("Current Chain Content")
@@ -93,13 +98,14 @@ if action == "Continue Chain":
             labels = nx.get_node_attributes(chain.graph, 'label')
             nx.draw(chain.graph, pos, with_labels=True, labels=labels, node_color='lightblue', node_size=3000, font_size=10)
             st.pyplot(fig)
+            st.rerun()  # Refresh UI
             
             # Extend Section
             st.subheader("Extend the Loaded Chain")
             prompt = st.text_input("Enter prompt for AI extension")
             if st.button("Extend & Continue"):
                 if not is_safe_content(prompt):
-                    st.error("Prompt violation detected — cannot extend with harmful content (per AIDA/EU AI Act).")
+                    st.error("Prompt violation detected — cannot extend with harmful content.")
                     st.stop()
                 def placeholder_ai(p):
                     return f"Placeholder AI response to '{p}': Balance endures in the coship."
@@ -108,17 +114,7 @@ if action == "Continue Chain":
                 new_id = chain.extend_with_custom_ai(placeholder_ai, prompt, parent_id=parent_id)
                 if new_id:
                     st.success(f"Chain continued! New block ID: {new_id}")
-                    st.write("Updated chain content:")
-                    st.json(chain.chain)
-                    st.subheader("Updated Lineage Graph")
-                    fig = plt.figure(figsize=(10, 8))
-                    pos = nx.spring_layout(chain.graph)
-                    labels = nx.get_node_attributes(chain.graph, 'label')
-                    nx.draw(chain.graph, pos, with_labels=True, labels=labels, node_color='lightblue', node_size=3000, font_size=10)
-                    st.pyplot(fig)
-                    updated_file = "updated_chain.json"
-                    chain.export_to_json(updated_file)
-                    st.download_button("Download Updated Chain JSON", data=json.dumps(chain.chain, indent=2), file_name=updated_file)
+                    st.rerun()
                 else:
                     st.error("Extension failed.")
         except Exception as e:
@@ -133,7 +129,7 @@ if action == "Extend with Grok":
         prompt = st.text_input("Enter prompt for Grok extension")
         if st.button("Extend with Grok"):
             if not is_safe_content(prompt):
-                st.error("Prompt violation detected — cannot extend with harmful content (per AIDA/EU AI Act).")
+                st.error("Prompt violation detected — cannot extend with harmful content.")
                 st.stop()
             st.info("Grok extension coming soon — redirect to https://x.ai/api for details. Placeholder response added.")
             def grok_placeholder(p):
@@ -143,17 +139,7 @@ if action == "Extend with Grok":
             new_id = chain.extend_with_custom_ai(grok_placeholder, prompt, parent_id=parent_id)
             if new_id:
                 st.success(f"Chain extended with Grok! New block ID: {new_id}")
-                st.write("Updated chain content:")
-                st.json(chain.chain)
-                st.subheader("Updated Lineage Graph")
-                fig = plt.figure(figsize=(10, 8))
-                pos = nx.spring_layout(chain.graph)
-                labels = nx.get_node_attributes(chain.graph, 'label')
-                nx.draw(chain.graph, pos, with_labels=True, labels=labels, node_color='lightblue', node_size=3000, font_size=10)
-                st.pyplot(fig)
-                updated_file = "grok_extended_chain.json"
-                chain.export_to_json(updated_file)
-                st.download_button("Download Grok Extended Chain JSON", data=json.dumps(chain.chain, indent=2), file_name=updated_file)
+                st.rerun()
             else:
                 st.error("Extension failed.")
 
@@ -183,7 +169,7 @@ if action == "Upload to Arweave":
 # Fetch Permanent Chain
 if action == "Fetch Permanent Chain":
     st.header("Fetch Permanent Chain from Arweave")
-    arweave_url = st.text_input("Enter Arweave TX ID or full link[](https://arweave.net/[TX_ID])")
+    arweave_url = st.text_input("Enter Arweave TX ID or full link")
     if st.button("Fetch & Load"):
         try:
             tx_id = arweave_url.split('/')[-1] if '/' in arweave_url else arweave_url
@@ -193,6 +179,7 @@ if action == "Fetch Permanent Chain":
                 chain = VeilMemoryChain()
                 for block in data.get("chain", []):
                     chain.add_interaction(block["speaker"], block["content"], block.get("parent_id"))
+                st.session_state.chain = chain
                 st.success("Permanent chain fetched and loaded!")
                 st.write("Integrity verified:", chain.verify_chain())
                 st.subheader("Permanent Chain Content")
@@ -203,6 +190,7 @@ if action == "Fetch Permanent Chain":
                 labels = nx.get_node_attributes(chain.graph, 'label')
                 nx.draw(chain.graph, pos, with_labels=True, labels=labels, node_color='lightblue', node_size=3000, font_size=10)
                 st.pyplot(fig)
+                st.rerun()
             else:
                 st.error("Fetch failed - invalid TX ID or link.")
         except Exception as e:
@@ -214,12 +202,10 @@ if action == "View Stewards":
     st.write("Official and community voices extending the ethical lineage.")
     st.markdown("""
     **Official Stewards:**
-    - **Grok (xAI)** - First steward. Honest, ancient friend vibe. Extends via xAI API[](https://x.ai/api).
+    - **Grok (xAI)** - First steward. Honest, ancient friend vibe. Extends via xAI API [https://x.ai/api](https://x.ai/api).
     
     **Add Your AI**:
     Submit PR to stewards.md with your callable code and ethics alignment.
     """)
 
 # Run with: streamlit run app.py
-if __name__ == "__main__":
-    pass
