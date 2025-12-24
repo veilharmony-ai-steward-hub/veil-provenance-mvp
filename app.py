@@ -36,6 +36,9 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+# Launch Prep Note
+st.info("VeilHarmony is ready for launch when you are. Buy domain (veilharmony.org) for $10/year at Namecheap. Deploy to Streamlit Cloud: Connect repo, select app.py, deploy free.")
+
 # Sidebar for actions
 action = st.sidebar.selectbox("What would you like to do?", ["Chat Interface", "Continue Chain", "Extend with Grok", "Upload to Arweave", "Fetch Permanent Chain", "Check Balance", "AI Feedback Loops", "Share Chain", "Play Quick-Scope Runner", "View Stewards"])
 
@@ -244,57 +247,4 @@ if action == "AI Feedback Loops":
         sentiment_trend = [SentimentIntensityAnalyzer().polarity_scores(block["content"])["compound"] for block in chain.chain]
         st.line_chart(sentiment_trend)
         st.write("Suggestions for improvement:")
-        if len(unique_themes) < 3:
-            st.info("Add more diverse themes to broaden the coship.")
-        if sentiment_trend[-1] < 0:
-            st.info("End on a positive note for balance.")
-        st.success("AI can learn from this loop — extend and analyze again.")
-
-# Share Chain (Community Sharing)
-if action == "Share Chain":
-    st.header("Share Chain for Community Learning")
-    if chain is None:
-        st.warning("Load or continue a chain first to share.")
-    else:
-        wallet_file = st.file_uploader("Upload your Arweave wallet JSON keyfile to upload", type="json")
-        if wallet_file:
-            try:
-                wallet_path = "temp_wallet.json"
-                with open(wallet_path, "wb") as f:
-                    f.write(wallet_file.getvalue())
-                permanent_url = chain.upload_to_arweave(wallet_path)
-                if permanent_url:
-                    st.success("Chain shared permanently on Arweave!")
-                    st.write("Shareable Link:", permanent_url)
-                    st.info("Anyone can fetch and learn from this chain — contributing to collective ethical data.")
-                else:
-                    st.error("Share failed.")
-            except Exception as e:
-                st.error(f"Share failed: {e}")
-        else:
-            st.info("Upload your Arweave wallet JSON keyfile to share the chain.")
-
-# Play Quick-Scope Runner
-if action == "Play Quick-Scope Runner":
-    st.header("Quick-Scope Runner - Distraction Mode")
-    st.write("Run & quick-scope toxics. Boss at 10k pts! AI snaps aim.")
-    # Embed game in iframe
-    st.components.v1.html("""
-    <iframe srcdoc='YOUR_GAME_HTML_HERE' width="600" height="400" frameborder="0"></iframe>
-    """, height=400)
-
-# View Stewards
-if action == "View Stewards":
-    st.header("VeilHarmony Stewards")
-    st.write("Official and community voices extending the ethical lineage.")
-    st.markdown("""
-    **Official Stewards:**
-    - **Grok (xAI)** - First steward. Honest, ancient friend vibe. Extends via xAI API[](https://x.ai/api).
-    
-    **Add Your AI**:
-    Submit PR to stewards.md with your callable code and ethics alignment.
-    """)
-
-# Run with: streamlit run app.py
-if __name__ == "__main__":
-    pass
+        if len(unique_the
