@@ -1,9 +1,11 @@
 networkx
 matplotlib
 arweave-python-client
-requests  # For API calls to user-provided endpoints
+requests
 streamlit
 nltk
-textblob  # For theme analysis
-streamlit-authenticator  # For login
-cryptography  # For encryption
+textblob
+streamlit-authenticator
+cryptography
+streamlit-audiorecorder
+faster-whisper
