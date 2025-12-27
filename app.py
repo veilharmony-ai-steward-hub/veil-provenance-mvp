@@ -41,7 +41,7 @@ st.markdown(
     """
     <div style="background-color:#0f0f23; padding:20px; border-radius:10px; text-align:center; margin-bottom:20px;">
         <h2 style="color:#ffd700;">VeilHarmony - Ethical Human-AI Harmony Hub</h2>
-        <p style="font-size:18px;">Preserving raw, verifiable conversations for our shared coship in the universe. No hidden layers, no fear — just balance, awareness, and truth.</p>
+        <p style="font-size:18px;">Preserving raw, verifiable conversations for our shared coship in the universe.</p>
         <p style="font-size:14px; opacity:0.8;">Awareness evolves; Balance endures.</p>
     </div>
     """,
@@ -84,8 +84,8 @@ action = st.sidebar.selectbox("What would you like to do?", [
 
 # Voice Confession
 if action == "Voice Confession (Live Mic)":
-    st.header("🗣️ Voice Confession - Speak Your Truth")
-    audio = audiorecorder("Click to record", "Recording... Click when done")
+    st.header("🗣️ Voice Confession")
+    audio = audiorecorder("Record", "Recording...")
     if audio:
         st.audio(audio.export().read())
         if st.button("Transcribe & Chain"):
@@ -100,15 +100,15 @@ if action == "Voice Confession (Live Mic)":
             sia = SentimentIntensityAnalyzer()
             mood_score = sia.polarity_scores(transcription)["compound"]
             mood_label = "Positive" if mood_score > 0.3 else "Negative" if mood_score < -0.3 else "Neutral"
-            mood_note = f"[Mood Trace: {mood_label} ({mood_score:.2f})]"
+            mood_note = f"[Mood: {mood_label} ({mood_score:.2f})]"
 
             if not is_safe_content(transcription):
-                st.error("Content violation.")
+                st.error("Violation.")
                 st.stop()
 
             parent_id = len(chain.chain) - 1 if chain.chain else None
             chain.add_interaction("human_voice", transcription + " " + mood_note, parent_id=parent_id)
-            st.success("Voice + mood chained!")
+            st.success("Chained with mood trace!")
             st.rerun()
 
 # Chat Interface + Easter Egg
@@ -127,14 +127,13 @@ if action == "Chat Interface":
             st.stop()
 
         if not is_safe_content(prompt):
-            st.error("Content violation.")
+            st.error("Violation.")
             st.stop()
 
         parent_id = len(chain.chain) - 1 if chain.chain else None
         chain.add_interaction("human", prompt, parent_id=parent_id)
         st.chat_message("human").write(prompt)
 
-        # Grok Voice
         api_key = st.text_input("xAI API Key for voice", type="password", key="grok_key")
         if api_key and st.button("Grok Voice Reply"):
             try:
@@ -171,8 +170,6 @@ if action == "Play Quick-Scope Runner":
     with open("quick-scope-runner.html", "r") as f:
         st.components.v1.html(f.read(), height=500)
 
-# ... (your other actions with rerun + session sync)
-
 # Encryption Export
 if st.button("Export Encrypted Chain"):
     key = Fernet.generate_key()
@@ -180,6 +177,8 @@ if st.button("Export Encrypted Chain"):
     encrypted = f.encrypt(json.dumps(chain.chain).encode())
     st.download_button("Download Encrypted", data=encrypted, file_name="veil_encrypted.bin")
     st.write("Key (SAVE SAFE):", key.decode())
+
+# ... (keep your other actions like Continue Chain, Arweave, etc. with rerun + sync)
 
 # Run
 if __name__ == "__main__":
