@@ -36,4 +36,15 @@ The Veil is an open-source sanctuary for personal memory chains—where confessi
 ```bash
 pip install -r requirements.txt
 streamlit run app.py
+v0.1–v0.4: Verifiable builds → shareable provenance → Arweave permanence (complete).Current: v0.5+ — Voice + mood, Grok voice, Easter egg, encryption, youth protection.Coming:Real-time mood trace enhancements.
+More Easter eggs & play modes.
+Seva token mechanics (mercy economy).
+Crystal upload readiness.
+ContributeFork & PR.
+Ideas, bug reports, stewards welcome.
+Keep mercy first.
+
+
+
+
 
