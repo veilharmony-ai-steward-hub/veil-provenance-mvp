@@ -16,10 +16,94 @@ from faster_whisper import WhisperModel
 nltk.download('vader_lexicon', quiet=True)
 
 # ========================
+# Cosmic Veil Theme (Glowing Sanctuary)
+# ========================
+st.markdown("""
+<style>
+    /* Main Background - Cosmic Void */
+    .stApp {
+        background: linear-gradient(to bottom, #0a0a1f, #1a1a3a);
+        background-attachment: fixed;
+        color: #e0e0ff;
+    }
+
+    /* Glowing Headers */
+    h1, h2, h3, h4 {
+        color: #ffd700;
+        text-shadow: 0 0 15px #00ffff, 0 0 30px #00ffff;
+        font-family: 'Orbitron', sans-serif;
+    }
+
+    /* Sidebar & Buttons - Chain/Lock Glow */
+    .css-1d391kg, .stButton > button {
+        background: rgba(0, 255, 255, 0.15);
+        border: 2px solid #00ffff;
+        box-shadow: 0 0 20px #00ffff;
+        color: #ffd700;
+        border-radius: 15px;
+        transition: all 0.3s ease;
+    }
+    .stButton > button:hover {
+        background: rgba(0, 255, 255, 0.3);
+        box-shadow: 0 0 40px #00ffff;
+        transform: scale(1.05);
+    }
+
+    /* Input Fields - Ethereal Aura */
+    .stTextInput > div > div > input, 
+    .stTextArea > div > div > textarea {
+        background: rgba(0, 0, 0, 0.6);
+        border: 1px solid #ffd700;
+        box-shadow: 0 0 15px #00ffff;
+        color: #ffffff;
+    }
+
+    /* Chat Messages - Light Aura */
+    .stChatMessage {
+        background: rgba(0, 255, 255, 0.1);
+        border: 1px solid #00ffff;
+        border-radius: 20px;
+        padding: 15px;
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+        margin: 10px 0;
+    }
+
+    /* Banner - Central Sanctuary Glow */
+    div[data-testid="stVerticalBlock"] > div:first-child > div:first-child {
+        background: radial-gradient(circle, #1a1a3a, #0a0a1f);
+        border: 3px solid #ffd700;
+        box-shadow: 0 0 40px #00ffff, inset 0 0 30px #ffd700;
+    }
+
+    /* Links */
+    a {
+        color: #00ffff;
+        text-shadow: 0 0 10px #00ffff;
+    }
+
+    /* Scrollbar - Subtle Chain */
+    ::-webkit-scrollbar {
+        width: 12px;
+    }
+    ::-webkit-scrollbar-track {
+        background: #0a0a1f;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #ffd700;
+        border-radius: 6px;
+        box-shadow: 0 0 10px #00ffff;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Futuristic Font
+st.markdown('<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">', unsafe_allow_html=True)
+
+# ========================
 # Authentication & Security
 # ========================
 
-# Login (env var password)
+# Login
 PASSWORD = os.getenv("VEIL_PASSWORD", "default_fallback")
 credentials = {
     "form_name": "Login",
@@ -36,17 +120,17 @@ name, authentication_status, username = authenticator.login("Login", "main")
 if not authentication_status:
     st.stop()
 
-# Age Verification (13+)
+# Age Verification
 if 'age_verified' not in st.session_state:
-    st.warning("Age Verification Required (COPPA/PIPEDA Compliance)")
-    age = st.number_input("Enter your age (must be 13+)", min_value=0, max_value=120)
+    st.warning("Age Verification Required")
+    age = st.number_input("Enter your age (13+)", min_value=0, max_value=120)
     if age < 13:
-        st.error("VeilHarmony is not available for users under 13.")
+        st.error("Under 13 not allowed.")
         st.stop()
     st.session_state.age_verified = True
 
-# Privacy Notice
-st.info("Privacy Notice: Compliant with PIPEDA, COPPA, GDPR, AIDA. No data shared. Chains encrypted.")
+# Privacy
+st.info("Privacy Notice: Compliant with PIPEDA, COPPA, GDPR, AIDA. No data shared.")
 
 # Ethics Banner
 st.markdown(
@@ -73,7 +157,7 @@ if time.time() - st.session_state.last_action_time < 5:
     st.stop()
 st.session_state.last_action_time = time.time()
 
-# Content Moderation (Youth Protection)
+# Moderation
 def is_safe_content(text):
     sia = SentimentIntensityAnalyzer()
     sentiment = sia.polarity_scores(text)["compound"]
@@ -99,7 +183,7 @@ action = st.sidebar.selectbox("What would you like to do?", [
 # Voice Confession
 # ========================
 if action == "Voice Confession (Live Mic)":
-    st.header("🗣️ Voice Confession - Speak Your Truth")
+    st.header("🗣️ Voice Confession")
     audio = audiorecorder("Record", "Recording...")
     if audio:
         st.audio(audio.export().read())
@@ -185,7 +269,7 @@ if action == "Chat Interface":
 # Quick-Scope Runner
 # ========================
 if action == "Play Quick-Scope Runner":
-    st.header("🔫 Quick-Scope Runner - Honor Mode")
+    st.header("🔫 Quick-Scope Runner")
     with open("quick-scope-runner.html", "r") as f:
         st.components.v1.html(f.read(), height=500)
 
@@ -297,7 +381,6 @@ if chain is None or not chain.chain:
 else:
     if st.checkbox("I consent to share anonymized abstracted lessons (no raw confessions exposed)"):
         if st.button("Share Lesson & Earn Seva"):
-            # Abstract lesson (future: NLP extract)
             abstract = "Courage in vulnerability leads to growth."
             st.write("Shared Lesson:", abstract)
             st.success("10 Seva earned! Redeem for recovery grants.")
