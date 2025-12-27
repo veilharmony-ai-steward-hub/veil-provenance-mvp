@@ -194,3 +194,15 @@ if st.button("Export Encrypted Chain"):
 # Run
 if __name__ == "__main__":
     pass
+    # Seva Token Layer (Voluntary Mercy Economy)
+if st.button("Seva: Share Abstracted Lesson (Earn Tokens)"):
+    if chain is None or not chain.chain:
+        st.warning("Create a chain first.")
+    else:
+        if st.checkbox("I consent to share anonymized lesson (no raw data)"):
+            # Abstract lesson (placeholder—expand with NLP)
+            abstract = "Lesson: Courage in vulnerability leads to growth."
+            st.write("Shared:", abstract)
+            # Mock mint (real: Solana/Base contract)
+            st.success("10 Seva earned! Redeem for grants.")
+            # Future: wallet connect + real mint
