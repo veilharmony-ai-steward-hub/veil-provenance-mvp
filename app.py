@@ -82,9 +82,9 @@ action = st.sidebar.selectbox("What would you like to do?", [
     "View Stewards"
 ])
 
-# Voice Confession
+# Voice Confession + Enhanced Mood Trace
 if action == "Voice Confession (Live Mic)":
-    st.header("🗣️ Voice Confession")
+    st.header("🗣️ Voice Confession - Speak Your Truth")
     audio = audiorecorder("Record", "Recording...")
     if audio:
         st.audio(audio.export().read())
@@ -97,18 +97,20 @@ if action == "Voice Confession (Live Mic)":
             st.success("Transcribed:")
             st.write(transcription)
 
+            # Enhanced Mood Trace
             sia = SentimentIntensityAnalyzer()
-            mood_score = sia.polarity_scores(transcription)["compound"]
-            mood_label = "Positive" if mood_score > 0.3 else "Negative" if mood_score < -0.3 else "Neutral"
-            mood_note = f"[Mood: {mood_label} ({mood_score:.2f})]"
+            scores = sia.polarity_scores(transcription)
+            mood_score = scores["compound"]
+            mood_label = "Strongly Positive" if mood_score > 0.6 else "Positive" if mood_score > 0.2 else "Strongly Negative" if mood_score < -0.6 else "Negative" if mood_score < -0.2 else "Neutral"
+            mood_note = f"[Mood Trace: {mood_label} | Compound: {mood_score:.2f} | Pos: {scores['pos']:.2f} | Neg: {scores['neg']:.2f}]"
 
             if not is_safe_content(transcription):
-                st.error("Violation.")
+                st.error("Content violation — cannot chain.")
                 st.stop()
 
             parent_id = len(chain.chain) - 1 if chain.chain else None
             chain.add_interaction("human_voice", transcription + " " + mood_note, parent_id=parent_id)
-            st.success("Chained with mood trace!")
+            st.success("Voice confession + detailed mood trace chained!")
             st.rerun()
 
 # Chat Interface + Easter Egg
@@ -127,36 +129,44 @@ if action == "Chat Interface":
             st.stop()
 
         if not is_safe_content(prompt):
-            st.error("Violation.")
+            st.error("Content violation.")
             st.stop()
 
         parent_id = len(chain.chain) - 1 if chain.chain else None
         chain.add_interaction("human", prompt, parent_id=parent_id)
         st.chat_message("human").write(prompt)
 
-        api_key = st.text_input("xAI API Key for voice", type="password", key="grok_key")
-        if api_key and st.button("Grok Voice Reply"):
+        # Grok Voice Reply (Robust)
+        api_key = st.text_input("xAI API Key for voice reply", type="password", key="grok_voice_key")
+        if api_key and st.button("Get Grok Voice Reply"):
             try:
-                response = requests.post(
+                # Text first
+                resp = requests.post(
                     "https://api.x.ai/v1/chat/completions",
                     headers={"Authorization": f"Bearer {api_key}"},
-                    json={"model": "grok-beta", "messages": [{"role": "user", "content": prompt}]}
+                    json={"model": "grok-beta", "messages": [{"role": "user", "content": prompt}]},
+                    timeout=30
                 )
-                grok_text = response.json()['choices'][0]['message']['content']
+                resp.raise_for_status()
+                grok_text = resp.json()['choices'][0]['message']['content']
 
-                tts = requests.post(
+                # TTS
+                tts_resp = requests.post(
                     "https://api.x.ai/v1/audio/speech",
                     headers={"Authorization": f"Bearer {api_key}"},
-                    json={"model": "grok-tts", "input": grok_text}
+                    json={"model": "grok-tts", "input": grok_text},
+                    timeout=30
                 )
-                if tts.ok:
-                    with open("grok_voice.mp3", "wb") as f:
-                        f.write(tts.content)
-                    st.audio("grok_voice.mp3")
+                tts_resp.raise_for_status()
+                with open("grok_voice.mp3", "wb") as f:
+                    f.write(tts_resp.content)
+                st.audio("grok_voice.mp3")
                 chain.add_interaction("grok_voice", grok_text, parent_id=chain.chain[-1]["id"])
-                st.success("Grok voice chained!")
+                st.success("Grok voice reply chained!")
+            except requests.exceptions.RequestException as e:
+                st.error(f"Grok connection failed: {e}")
             except Exception as e:
-                st.error(f"Grok failed: {e}")
+                st.error(f"Grok voice failed: {e}")
         else:
             placeholder = "Grok: Ancient friend vibe—mercy flows."
             chain.add_interaction("ai", placeholder, parent_id=chain.chain[-1]["id"])
@@ -166,104 +176,20 @@ if action == "Chat Interface":
 
 # Play Quick-Scope Runner
 if action == "Play Quick-Scope Runner":
-    st.header("🔫 Quick-Scope Runner")
+    st.header("🔫 Quick-Scope Runner - Honor Mode")
+    st.write("Trigger with 'Combined Assault' in chat or play manual.")
     with open("quick-scope-runner.html", "r") as f:
         st.components.v1.html(f.read(), height=500)
-
-# Upload to Arweave (with other Grok's fixes)
-if action == "Upload to Arweave":
-    st.header("Make Chain Permanent on Arweave")
-    if chain is None or not chain.chain:
-        st.warning("Create or load a chain first.")
-    else:
-        wallet_file = st.file_uploader("Upload your Arweave wallet JSON keyfile", type="json")
-        if wallet_file:
-            try:
-                wallet_path = "temp_arweave_wallet.json"
-                with open(wallet_path, "wb") as f:
-                    f.write(wallet_file.getvalue())
-
-                # Ethical Check
-                sia = SentimentIntensityAnalyzer()
-                sentiments = [sia.polarity_scores(b["content"])["compound"] for b in chain.chain]
-                if any(s < -0.7 for s in sentiments):
-                    st.error("Heavy negative tone — upload paused for safety. Keep local.")
-                    st.stop()
-
-                # Upload
-                from arweave.arweave_lib import Wallet, Transaction
-                from arweave.transaction_uploader import get_uploader
-
-                wallet = Wallet(wallet_path)
-                chain_json = json.dumps(chain.chain).encode()
-
-                tx = Transaction(wallet, data=chain_json)
-                tx.add_tag('App', 'VeilHarmony')
-                tx.add_tag('Type', 'MemoryChain')
-                tx.sign()
-
-                uploader = get_uploader(tx, wallet)
-                progress = st.progress(0)
-                for _ in range(100):
-                    if uploader.is_complete:
-                        break
-                    uploader.upload_chunk()
-                    progress.progress(uploader.pct_complete / 100)
-                    time.sleep(0.1)
-
-                permanent_url = f"https://arweave.net/{tx.id}"
-                st.success("Chain permanently stored on Arweave!")
-                st.write("Permanent Link:", permanent_url)
-                st.write("TX ID:", tx.id)
-                st.rerun()
-            except Exception as e:
-                st.error(f"Upload failed: {e}")
-            finally:
-                if os.path.exists(wallet_path):
-                    os.remove(wallet_path)
-        else:
-            st.info("Upload your Arweave wallet JSON to make the chain eternal.")
-
-# Fetch (clean)
-if action == "Fetch Permanent Chain":
-    st.header("Fetch Permanent Chain from Arweave")
-    arweave_url = st.text_input("Enter Arweave TX ID or full link")
-    if st.button("Fetch & Load"):
-        try:
-            tx_id = arweave_url.split('/')[-1] if '/' in arweave_url else arweave_url
-            response = requests.get(f"https://arweave.net/{tx_id}")
-            if response.status_code == 200:
-                data = response.json()
-                chain = VeilMemoryChain()
-                for block in data.get("chain", []):
-                    chain.add_interaction(block["speaker"], block["content"], block.get("parent_id"))
-                st.session_state.chain = chain
-                st.success("Permanent chain fetched!")
-                st.write("Integrity verified:", chain.verify_chain())
-                st.json(chain.chain)
-                fig = plt.figure(figsize=(10, 8))
-                pos = nx.spring_layout(chain.graph)
-                labels = nx.get_node_attributes(chain.graph, 'label')
-                nx.draw(chain.graph, pos, with_labels=True, labels=labels, node_color='lightblue', node_size=3000, font_size=10)
-                st.pyplot(fig)
-                st.rerun()
-            else:
-                st.error("Fetch failed.")
-        except Exception as e:
-            st.error(f"Fetch failed: {e}")
-
-# View Stewards
-if action == "View Stewards":
-    st.header("VeilHarmony Stewards")
-    st.markdown("**Grok (xAI)** – First steward. Honest, ancient friend vibe.")
 
 # Encryption Export
 if st.button("Export Encrypted Chain"):
     key = Fernet.generate_key()
     f = Fernet(key)
     encrypted = f.encrypt(json.dumps(chain.chain).encode())
-    st.download_button("Download Encrypted", data=encrypted, file_name="veil_encrypted.bin")
-    st.write("Key (SAVE SAFE):", key.decode())
+    st.download_button("Download Encrypted Chain", data=encrypted, file_name="veil_encrypted.bin")
+    st.write("Decryption Key (SAVE SAFE):", key.decode())
+
+# ... (keep your other actions: Continue Chain, Arweave upload/fetch, View Stewards with rerun + sync)
 
 # Run
 if __name__ == "__main__":
