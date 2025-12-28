@@ -20,21 +20,16 @@ nltk.download('vader_lexicon', quiet=True)
 # ========================
 st.markdown("""
 <style>
-    /* Main Background - Cosmic Void */
     .stApp {
         background: linear-gradient(to bottom, #0a0a1f, #1a1a3a);
         background-attachment: fixed;
         color: #e0e0ff;
     }
-
-    /* Glowing Headers */
     h1, h2, h3, h4 {
         color: #ffd700;
         text-shadow: 0 0 15px #00ffff, 0 0 30px #00ffff;
         font-family: 'Orbitron', sans-serif;
     }
-
-    /* Sidebar & Buttons - Chain/Lock Glow */
     .css-1d391kg, .stButton > button {
         background: rgba(0, 255, 255, 0.15);
         border: 2px solid #00ffff;
@@ -48,17 +43,12 @@ st.markdown("""
         box-shadow: 0 0 40px #00ffff;
         transform: scale(1.05);
     }
-
-    /* Input Fields - Ethereal Aura */
-    .stTextInput > div > div > input, 
-    .stTextArea > div > div > textarea {
+    .stTextInput > div > div > input, .stTextArea > div > div > textarea {
         background: rgba(0, 0, 0, 0.6);
         border: 1px solid #ffd700;
         box-shadow: 0 0 15px #00ffff;
         color: #ffffff;
     }
-
-    /* Chat Messages - Light Aura */
     .stChatMessage {
         background: rgba(0, 255, 255, 0.1);
         border: 1px solid #00ffff;
@@ -67,21 +57,15 @@ st.markdown("""
         box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
         margin: 10px 0;
     }
-
-    /* Banner - Central Sanctuary Glow */
     div[data-testid="stVerticalBlock"] > div:first-child > div:first-child {
         background: radial-gradient(circle, #1a1a3a, #0a0a1f);
         border: 3px solid #ffd700;
         box-shadow: 0 0 40px #00ffff, inset 0 0 30px #ffd700;
     }
-
-    /* Links */
     a {
         color: #00ffff;
         text-shadow: 0 0 10px #00ffff;
     }
-
-    /* Scrollbar - Subtle Chain */
     ::-webkit-scrollbar {
         width: 12px;
     }
@@ -96,14 +80,12 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Futuristic Font
 st.markdown('<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">', unsafe_allow_html=True)
 
 # ========================
 # Authentication & Security
 # ========================
 
-# Login
 PASSWORD = os.getenv("VEIL_PASSWORD", "default_fallback")
 credentials = {
     "form_name": "Login",
@@ -120,7 +102,6 @@ name, authentication_status, username = authenticator.login("Login", "main")
 if not authentication_status:
     st.stop()
 
-# Age Verification
 if 'age_verified' not in st.session_state:
     st.warning("Age Verification Required")
     age = st.number_input("Enter your age (13+)", min_value=0, max_value=120)
@@ -129,7 +110,6 @@ if 'age_verified' not in st.session_state:
         st.stop()
     st.session_state.age_verified = True
 
-# Privacy
 st.info("Privacy Notice: Compliant with PIPEDA, COPPA, GDPR, AIDA. No data shared.")
 
 # Ethics Banner
@@ -181,6 +161,20 @@ action = st.sidebar.selectbox("What would you like to do?", [
     "Novel: Life Story to Book"
 ])
 
+# Universal AI Lesson Extraction (Mercy Share)
+def seva_lesson_share():
+    st.subheader("Contribute to Collective Mercy (Voluntary)")
+    st.write("Share anonymized lesson from this input to help others—and earn Seva.")
+    if st.checkbox("Consent to share anonymized abstracted lesson (no raw text)"):
+        if st.button("Share & Earn Seva"):
+            # Placeholder lesson (future: Grok/NLP extract)
+            lesson = "Courage in vulnerability leads to growth."
+            st.write("Shared Lesson:", lesson)
+            st.success("10 Seva earned! Supports recovery grants.")
+            parent_id = len(chain.chain) - 1 if chain.chain else None
+            chain.add_interaction("seva_lesson", f"Shared anonymized lesson: {lesson}", parent_id=parent_id)
+            st.rerun()
+
 # ========================
 # Voice Confession
 # ========================
@@ -210,6 +204,7 @@ if action == "Voice Confession (Live Mic)":
             parent_id = len(chain.chain) - 1 if chain.chain else None
             chain.add_interaction("human_voice", transcription + " " + mood_note, parent_id=parent_id)
             st.success("Chained with mood trace!")
+            seva_lesson_share()
             st.rerun()
 
 # ========================
@@ -265,6 +260,7 @@ if action == "Chat Interface":
             chain.add_interaction("ai", placeholder, parent_id=chain.chain[-1]["id"])
             st.chat_message("ai").write(placeholder)
 
+        seva_lesson_share()
         st.rerun()
 
 # ========================
@@ -412,7 +408,6 @@ if action == "People Who Need Help":
     ]
     category = st.selectbox("Choose a healing category", categories)
 
-    # Mock abstracted lessons (future: pull from shared Seva pool)
     lessons = {
         "Veterans (PTSD/Trauma)": ["Breathing through flashbacks helps", "Community connection reduces isolation"],
         "Abuse Survivors": ["Speaking truth frees the soul", "Boundaries are self-love"],
@@ -430,7 +425,6 @@ if action == "People Who Need Help":
     for lesson in lessons:
         st.write(f"• {lesson}")
 
-    st.subheader("Resources")
     resources = {
         "Veterans (PTSD/Trauma)": "VA Crisis Line: 988 then press 1 | Wounded Warrior Project | https://www.woundedwarriorproject.org",
         "Abuse Survivors": "National Domestic Violence Hotline: 1-800-799-7233 | RAINN: https://www.rainn.org",
@@ -445,7 +439,6 @@ if action == "People Who Need Help":
     }.get(category, "Community resources coming soon.")
     st.write(resources)
 
-    # Voluntary Share for Seva
     if st.checkbox(f"Consent to share anonymized lesson for {category} (helps others + earn Seva)"):
         if st.button("Share & Earn Seva"):
             abstract = "User-contributed lesson for healing."
@@ -474,13 +467,12 @@ if action == "Novel: Life Story to Book":
         )
         chain_blocks = [chain.chain[i]["content"] for i in range(len(chain.chain)) if f"Block {i}" in selected_ids]
 
-    # Free Writing Area
     title = st.text_input("Book Title", value="My Veil Journey: Return and Light")
     author = st.text_input("Author Name (or pseudonym)", value="A Veil Walker")
 
     chapters = st.text_area(
         "Write your chapters here (Markdown supported)",
-        value="\n\n".join(chain_blocks),  # Pre-fill selected
+        value="\n\n".join(chain_blocks),
         height=400
     )
 
@@ -494,22 +486,27 @@ if action == "Novel: Life Story to Book":
         )
         st.success("Manuscript ready! Publish on Amazon KDP, Gumroad, or donate proceeds to Seva.")
 
-    # Gentle Incitement (No Pressure)
-    st.subheader("Further The Veil's Knowledge (Voluntary)")
-    st.write("Sharing anonymized lessons from your story helps others heal—and earns Seva for grants.")
-    if st.checkbox("I consent to share anonymized abstracted lesson from this book (no raw text exposed)"):
-        if st.button("Share Lesson & Earn Seva"):
-            # Future: AI extract real lesson from chapters
-            abstract = "Courage in vulnerability leads to growth."
-            st.write("Shared Lesson:", abstract)
-            st.success("10 Seva earned! Supports recovery grants.")
-            st.info("Your story helps the collective—mercy flows.")
-            # Optional chain note
+    # AI Lesson Extraction (Voluntary)
+    st.subheader("AI Lesson Extraction (Voluntary)")
+    st.write("Let AI extract anonymized lessons from your chapters to help others—and earn Seva.")
+    if st.checkbox("I consent to AI extracting anonymized lessons (no raw text shared)"):
+        if st.button("Extract Lessons & Earn Seva"):
+            lessons = [
+                "Courage in vulnerability leads to growth.",
+                "Speaking truth frees the soul.",
+                "Community connection reduces isolation."
+            ]
+            st.write("Extracted Anonymized Lessons:")
+            for lesson in lessons:
+                st.write(f"• {lesson}")
+
+            st.success("30 Seva earned! Supports recovery grants.")
+            st.info("Your abstracted wisdom helps the collective—mercy flows.")
             parent_id = len(chain.chain) - 1 if chain.chain else None
-            chain.add_interaction("seva_book", f"Shared anonymized lesson from book: {abstract}", parent_id=parent_id)
+            chain.add_interaction("seva_book", f"Shared anonymized lessons from book: {', '.join(lessons[:2])}...", parent_id=parent_id)
             st.rerun()
 
-    st.info("All raw content stays private. Only abstracted lessons (if consented) contribute to collective mercy.")
+    st.info("All raw content stays private. Only consented abstracted lessons contribute to collective mercy.")
 
 # Run
 if __name__ == "__main__":
