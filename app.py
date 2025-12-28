@@ -177,7 +177,8 @@ action = st.sidebar.selectbox("What would you like to do?", [
     "Fetch Permanent Chain",
     "View Stewards",
     "People Who Need Help",
-    "Seva: Mercy Economy"
+    "Seva: Mercy Economy",
+    "Novel: Life Story to Book"
 ])
 
 # ========================
@@ -453,6 +454,62 @@ if action == "People Who Need Help":
             parent_id = len(chain.chain) - 1 if chain.chain else None
             chain.add_interaction("seva_help", f"Contributed to {category}: {abstract}", parent_id=parent_id)
             st.rerun()
+
+# ========================
+# Novel: Life Story to Book
+# ========================
+if action == "Novel: Life Story to Book":
+    st.header("📖 Novel - Turn Your Journey into a Book")
+    st.write("Craft your life story. Pull from chains (optional), write new chapters, publish for healing & support.")
+
+    if chain is None or not chain.chain:
+        st.info("No chain loaded yet—start writing fresh or load one via 'Continue Chain'.")
+        chain_blocks = []
+    else:
+        st.write("Your current chain has", len(chain.chain), "blocks.")
+        selected_ids = st.multiselect(
+            "Optionally pull blocks from chain (privacy safe—only you see raw)",
+            options=[f"Block {i}: {b['content'][:60]}..." for i, b in enumerate(chain.chain)],
+            format_func=lambda x: x
+        )
+        chain_blocks = [chain.chain[i]["content"] for i in range(len(chain.chain)) if f"Block {i}" in selected_ids]
+
+    # Free Writing Area
+    title = st.text_input("Book Title", value="My Veil Journey: Return and Light")
+    author = st.text_input("Author Name (or pseudonym)", value="A Veil Walker")
+
+    chapters = st.text_area(
+        "Write your chapters here (Markdown supported)",
+        value="\n\n".join(chain_blocks),  # Pre-fill selected
+        height=400
+    )
+
+    if st.button("Generate Manuscript Preview"):
+        manuscript = f"# {title}\n\nBy {author}\n\n{chapters}"
+        st.download_button(
+            "Download Manuscript (Markdown)",
+            data=manuscript,
+            file_name=f"{title.replace(' ', '_')}.md",
+            mime="text/markdown"
+        )
+        st.success("Manuscript ready! Publish on Amazon KDP, Gumroad, or donate proceeds to Seva.")
+
+    # Gentle Incitement (No Pressure)
+    st.subheader("Further The Veil's Knowledge (Voluntary)")
+    st.write("Sharing anonymized lessons from your story helps others heal—and earns Seva for grants.")
+    if st.checkbox("I consent to share anonymized abstracted lesson from this book (no raw text exposed)"):
+        if st.button("Share Lesson & Earn Seva"):
+            # Future: AI extract real lesson from chapters
+            abstract = "Courage in vulnerability leads to growth."
+            st.write("Shared Lesson:", abstract)
+            st.success("10 Seva earned! Supports recovery grants.")
+            st.info("Your story helps the collective—mercy flows.")
+            # Optional chain note
+            parent_id = len(chain.chain) - 1 if chain.chain else None
+            chain.add_interaction("seva_book", f"Shared anonymized lesson from book: {abstract}", parent_id=parent_id)
+            st.rerun()
+
+    st.info("All raw content stays private. Only abstracted lessons (if consented) contribute to collective mercy.")
 
 # Run
 if __name__ == "__main__":
