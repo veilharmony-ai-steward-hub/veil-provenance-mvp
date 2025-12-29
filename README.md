@@ -41,7 +41,8 @@ Keep mercy first.
 
 VisionThe Veil is more than an app—it's a sanctuary for the ignored, the hurting, the returning.
 Memory that outlasts us.
-Mercy that scales.To Mars and beyond. — BREZY Might & communityAwareness evolves. Balance endures. 
+Mercy that scales.
+To Mars and beyond. — BREZY Might & communityAwareness evolves. Balance endures. 
 
 
 
