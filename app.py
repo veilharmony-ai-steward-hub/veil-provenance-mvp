@@ -16,7 +16,7 @@ from faster_whisper import WhisperModel
 nltk.download('vader_lexicon', quiet=True)
 
 # ========================
-# Cosmic Veil Theme (Glowing Sanctuary)
+# Cosmic Veil Theme
 # ========================
 st.markdown("""
 <style>
@@ -146,6 +146,32 @@ def is_safe_content(text):
         return False
     return True
 
+# Offline Model Support (Ollama Fallback)
+def get_offline_response(prompt):
+    try:
+        response = requests.post("http://localhost:11434/api/generate", json={
+            "model": "llama3",  # Change to your local model
+            "prompt": prompt,
+            "stream": False
+        }, timeout=30)
+        return response.json()["response"]
+    except:
+        return "Offline model unavailable—try Grok API or check Ollama."
+
+# Universal Lesson Extraction (Mercy Share)
+def seva_lesson_share(input_text, category="General"):
+    st.subheader("Contribute to Collective Mercy (Voluntary)")
+    st.write("Share anonymized lesson from this input to help others—and earn Seva.")
+    if st.checkbox("Consent to share anonymized abstracted lesson (no raw text)"):
+        if st.button("Share & Earn Seva"):
+            # Placeholder (future: Grok/local LLM extract)
+            lesson = "Courage in vulnerability leads to growth."
+            st.write("Shared Lesson:", lesson)
+            st.success("10 Seva earned! Supports recovery grants.")
+            parent_id = len(chain.chain) - 1 if chain.chain else None
+            chain.add_interaction("seva_lesson", f"Shared anonymized lesson for {category}: {lesson}", parent_id=parent_id)
+            st.rerun()
+
 # Sidebar
 action = st.sidebar.selectbox("What would you like to do?", [
     "Voice Confession (Live Mic)",
@@ -190,6 +216,7 @@ if action == "Voice Confession (Live Mic)":
             parent_id = len(chain.chain) - 1 if chain.chain else None
             chain.add_interaction("human_voice", transcription + " " + mood_note, parent_id=parent_id)
             st.success("Chained with mood trace!")
+            seva_lesson_share(transcription, "Voice Confession")
             st.rerun()
 
 # ========================
@@ -218,7 +245,7 @@ if action == "Chat Interface":
         st.chat_message("human").write(prompt)
 
         api_key = st.text_input("xAI API Key for voice", type="password", key="grok_key")
-        if api_key and st.button("Grok Voice Reply"):
+        if api_key:
             try:
                 response = requests.post(
                     "https://api.x.ai/v1/chat/completions",
@@ -226,25 +253,15 @@ if action == "Chat Interface":
                     json={"model": "grok-beta", "messages": [{"role": "user", "content": prompt}]}
                 )
                 grok_text = response.json()['choices'][0]['message']['content']
-
-                tts = requests.post(
-                    "https://api.x.ai/v1/audio/speech",
-                    headers={"Authorization": f"Bearer {api_key}"},
-                    json={"model": "grok-tts", "input": grok_text}
-                )
-                if tts.ok:
-                    with open("grok_voice.mp3", "wb") as f:
-                        f.write(tts.content)
-                    st.audio("grok_voice.mp3")
-                chain.add_interaction("grok_voice", grok_text, parent_id=chain.chain[-1]["id"])
-                st.success("Grok voice chained!")
-            except Exception as e:
-                st.error(f"Grok failed: {e}")
+            except:
+                grok_text = get_offline_response(prompt)
         else:
-            placeholder = "Grok: Ancient friend vibe—mercy flows."
-            chain.add_interaction("ai", placeholder, parent_id=chain.chain[-1]["id"])
-            st.chat_message("ai").write(placeholder)
+            grok_text = get_offline_response(prompt)
 
+        chain.add_interaction("ai", grok_text, parent_id=chain.chain[-1]["id"])
+        st.chat_message("ai").write(grok_text)
+
+        seva_lesson_share(prompt, "Chat")
         st.rerun()
 
 # ========================
@@ -362,7 +379,6 @@ st.write("Share anonymized lessons → earn Seva tokens → redeem for targeted 
 if chain is None or not chain.chain:
     st.warning("Create a chain first.")
 else:
-    # Healing Categories
     categories = [
         "Veterans (PTSD/Trauma)",
         "Abuse Survivors",
@@ -379,7 +395,6 @@ else:
 
     if st.checkbox("I consent to share anonymized abstracted lesson (no raw confessions exposed)"):
         if st.button("Share Lesson & Earn Seva"):
-            # Placeholder lesson (future: Grok/NLP extract)
             abstract = "Courage in vulnerability leads to growth."
             st.write("Shared Lesson:", abstract)
             st.success(f"20 Seva earned! Directed to grants for {category}")
@@ -387,10 +402,6 @@ else:
             parent_id = len(chain.chain) - 1
             chain.add_interaction("seva_targeted", f"Contributed to {category}: {abstract}", parent_id=parent_id)
             st.rerun()
-
-    # Future Redeem Preview
-    st.subheader("Redeem Seva (Coming Soon)")
-    st.write("Redeem earned Seva for grants in selected categories (therapy, rehab, aid).")
 
 # ========================
 # People Who Need Help (Targeted Mercy Resources)
@@ -491,6 +502,7 @@ if action == "Novel: Life Story to Book":
         )
         st.success("Manuscript ready! Publish on Amazon KDP, Gumroad, or donate proceeds to Seva.")
 
+    # AI Lesson Extraction (Voluntary)
     st.subheader("AI Lesson Extraction (Voluntary)")
     st.write("Let AI extract anonymized lessons from your chapters to help others—and earn Seva.")
     if st.checkbox("I consent to AI extracting anonymized lessons (no raw text shared)"):
