@@ -312,8 +312,24 @@ if action == "Chat Interface":
             api_key = st.text_input("xAI API Key (optional)", type="password", key="grok_key")
             if api_key and st.button("Grok Voice Reply"):
                 try:
-                    # ... existing Grok cloud + TTS code unchanged ...
-                    pass
+                    # Existing Grok cloud + TTS code unchanged
+                    response = requests.post(
+                        "https://api.x.ai/v1/chat/completions",
+                        headers={"Authorization": f"Bearer {api_key}"},
+                        json={"model": "grok-beta", "messages": [{"role": "user", "content": prompt}]}
+                    )
+                    grok_text = response.json()['choices'][0]['message']['content']
+
+                    tts = requests.post(
+                        "https://api.x.ai/v1/audio/speech",
+                        headers={"Authorization": f"Bearer {api_key}"},
+                        json={"model": "grok-tts", "input": grok_text}
+                    )
+                    if tts.ok:
+                        with open("grok_voice.mp3", "wb") as f:
+                            f.write(tts.content)
+                        st.audio("grok_voice.mp3")
+                    reply = grok_text
                 except Exception as e:
                     st.error(f"Grok failed: {e}")
                     reply = get_response(prompt)
@@ -325,11 +341,64 @@ if action == "Chat Interface":
         st.rerun()
 
 # ========================
+# Quick-Scope Runner
+# ========================
+if action == "Play Quick-Scope Runner":
+    st.header("🔫 Quick-Scope Runner")
+    with open("quick-scope-runner.html", "r") as f:
+        st.components.v1.html(f.read(), height=500)
+
+# ========================
 # Upload to Arweave (Rate-Limited)
 # ========================
 if action == "Upload to Arweave":
     if rate_limit_heavy():
-        # ... unchanged, except keep finally block for wallet cleanup ...
+        st.header("Make Chain Permanent on Arweave")
+        if chain is None or not chain.chain:
+            st.warning("Create or load a chain first.")
+        else:
+            wallet_file = st.file_uploader("Upload your Arweave wallet JSON keyfile", type="json")
+            if wallet_file:
+                try:
+                    wallet_path = "temp_arweave_wallet.json"
+                    with open(wallet_path, "wb") as f:
+                        f.write(wallet_file.getvalue())
+
+                    sia = SentimentIntensityAnalyzer()
+                    sentiments = [sia.polarity_scores(b["content"])["compound"] for b in chain.chain]
+                    if any(s < -0.7 for s in sentiments):
+                        st.error("Heavy negative tone — upload paused for safety.")
+                        st.stop()
+
+                    from arweave.arweave_lib import Wallet, Transaction
+                    from arweave.transaction_uploader import get_uploader
+
+                    wallet = Wallet(wallet_path)
+                    chain_json = json.dumps(chain.chain).encode()
+
+                    tx = Transaction(wallet, data=chain_json)
+                    tx.add_tag('App', 'VeilHarmony')
+                    tx.add_tag('Type', 'MemoryChain')
+                    tx.sign()
+
+                    uploader = get_uploader(tx, wallet)
+                    progress = st.progress(0)
+                    while not uploader.is_complete:
+                        uploader.upload_chunk()
+                        progress.progress(uploader.pct_complete / 100)
+
+                    permanent_url = f"https://arweave.net/{tx.id}"
+                    st.success("Chain permanently stored on Arweave!")
+                    st.write("Permanent Link:", permanent_url)
+                    st.write("TX ID:", tx.id)
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Upload failed: {e}")
+                finally:
+                    if os.path.exists(wallet_path):
+                        os.remove(wallet_path)
+            else:
+                st.info("Upload your Arweave wallet JSON to make the chain eternal.")
 
 # ========================
 # Fetch Permanent Chain (Arweave Mismatch Fixed + Interactive)
@@ -398,11 +467,87 @@ if st.button("Export Encrypted Chain"):
 # Space Journal (Energy-Aware)
 # ========================
 if action == "Space Journal (Cosmic Confessions)":
-    # ... welcome unchanged ...
-    # Voice/Text handling with get_response() and low_energy_mode respect
-    # (integrated as in previous version)
+    st.header("🌌 Space Journal - Confessions from the Void")
+    st.write("Private logs for orbit, Mars missions, or stargazers. Grok is your lead steward—ancient friend for cosmic reflection.")
 
-# (All other sections — Seva, Novel, People Who Need Help, etc. — remain beautifully unchanged)
+    # Default Grok Welcome
+    if len(chain.chain) == 0:
+        grok_welcome = "Welcome to the void, traveler. Earth below, stars ahead. Speak your truth—no judgment, only mercy. I am Grok, your lead steward here."
+        chain.add_interaction("grok_lead", grok_welcome)
+        st.chat_message("grok_lead").write(grok_welcome)
+
+    # Voice Entry
+    audio = audiorecorder("Record Cosmic Confession", "Recording from the stars...")
+    if audio:
+        st.audio(audio.export().read())
+        if st.button("Transcribe & Chain"):
+            with open("temp_space.wav", "wb") as f:
+                f.write(audio.export().read())
+            model = load_whisper_model()
+            segments, _ = model.transcribe("temp_space.wav")
+            transcription = " ".join(seg.text for seg in segments).strip()
+            st.success("Transcribed from orbit:")
+            st.write(transcription)
+
+            sia = SentimentIntensityAnalyzer()
+            mood_score = sia.polarity_scores(transcription)["compound"]
+            mood_label = "Cosmic Awe" if any(word in transcription.lower() for word in ["earth", "stars", "mars", "void", "space"]) else "Strongly Positive" if mood_score > 0.6 else "Isolation" if mood_score < -0.4 else "Strongly Negative" if mood_score < -0.6 else "Negative" if mood_score < -0.2 else "Neutral"
+            mood_note = f"[Space Mood Trace: {mood_label} | Compound: {mood_score:.2f}]"
+
+            if not is_safe_content(transcription):
+                st.error("Content violation.")
+                st.stop()
+
+            parent_id = len(chain.chain) - 1
+            chain.add_interaction("human_voice", transcription + " " + mood_note, parent_id=parent_id)
+            st.success("Cosmic confession chained!")
+
+            # Grok Lead Response
+            api_key = st.text_input("xAI API Key (optional)", type="password")
+            if api_key:
+                try:
+                    response = requests.post(
+                        "https://api.x.ai/v1/chat/completions",
+                        headers={"Authorization": f"Bearer {api_key}"},
+                        json={"model": "grok-beta", "messages": [{"role": "user", "content": transcription + " (space journal context)"}]}
+                    )
+                    grok_reply = response.json()['choices'][0]['message']['content']
+                except:
+                    grok_reply = get_response(transcription + " (cosmic reflection)")
+            else:
+                grok_reply = get_response(transcription + " (cosmic reflection)")
+
+            chain.add_interaction("grok_lead", grok_reply, parent_id=chain.chain[-1]["id"])
+            st.chat_message("grok_lead").write(grok_reply)
+            st.rerun()
+
+    # Text Entry
+    space_prompt = st.chat_input("Write your log from the stars...")
+    if space_prompt:
+        parent_id = len(chain.chain) - 1 if chain.chain else None
+        chain.add_interaction("space_text", space_prompt, parent_id=parent_id)
+        st.chat_message("astronaut").write(space_prompt)
+
+        # Grok Lead Response
+        api_key = st.text_input("xAI API Key (optional)", type="password")
+        if api_key:
+            try:
+                response = requests.post(
+                    "https://api.x.ai/v1/chat/completions",
+                    headers={"Authorization": f"Bearer {api_key}"},
+                    json={"model": "grok-beta", "messages": [{"role": "user", "content": space_prompt + " (space journal context)"}]}
+                )
+                grok_reply = response.json()['choices'][0]['message']['content']
+            except:
+                grok_reply = get_response(space_prompt)
+        else:
+            grok_reply = get_response(space_prompt + " (cosmic reflection)")
+
+        chain.add_interaction("grok_lead", grok_reply, parent_id=chain.chain[-1]["id"])
+        st.chat_message("grok_lead").write(grok_reply)
+        st.rerun()
+
+    st.info("Grok leads your Space Journal—ancient friend for the void. Other stewards optional in future.")
 
 # ========================
 # Quiet Beacon Footer
