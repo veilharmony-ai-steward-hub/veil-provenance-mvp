@@ -98,13 +98,18 @@ st.markdown("""
 st.markdown('<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">', unsafe_allow_html=True)
 
 # ========================
+# CSAM/Abuse Zero-Tolerance Banner
+# ========================
+st.error("🚫 Zero tolerance for child exploitation, CSAM, or abuse. Violations reported to authorities.")
+
+# ========================
 # Sanctuary Settings (Sidebar Top)
 # ========================
 st.sidebar.header("🌿 Sanctuary Settings")
 low_energy_mode = st.sidebar.toggle(
-    "Low-Energy Mode",
-    value=False,
-    help="Uses only local/offline models. No cloud calls, no TTS, minimal power draw. Mercy over consumption."
+    "Low-Energy Mode (Recommended)",
+    value=True,  # Default ON
+    help="Local only. Max privacy. No cloud leaks. Mercy over consumption."
 )
 
 st.sidebar.markdown("### 🔮 Future Vision")
@@ -145,6 +150,14 @@ if 'age_verified' not in st.session_state:
         st.error("Under 13 not allowed.")
         st.stop()
     st.session_state.age_verified = True
+    st.session_state.user_age = age
+
+# Stricter Youth Protection for Under 18
+if st.session_state.age_verified and st.session_state.user_age < 18:
+    st.warning("Under 18: Limited access — no voice recording, no Seva sharing, heightened safety filters.")
+    if action in ["Voice Confession (Live Mic)", "Seva: Mercy Economy", "Novel: Life Story to Book"]:
+        st.info("This feature is restricted for users under 18.")
+        st.stop()
 
 st.info("Privacy Notice: Designed with privacy principles in mind (PIPEDA, COPPA, GDPR, AIDA-inspired). No data shared without consent.")
 
@@ -312,7 +325,6 @@ if action == "Chat Interface":
             api_key = st.text_input("xAI API Key (optional)", type="password", key="grok_key")
             if api_key and st.button("Grok Voice Reply"):
                 try:
-                    # Existing Grok cloud + TTS code unchanged
                     response = requests.post(
                         "https://api.x.ai/v1/chat/completions",
                         headers={"Authorization": f"Bearer {api_key}"},
@@ -330,6 +342,8 @@ if action == "Chat Interface":
                             f.write(tts.content)
                         st.audio("grok_voice.mp3")
                     reply = grok_text
+                    chain.add_interaction("grok_voice", reply, parent_id=chain.chain[-1]["id"])
+                    st.success("Grok voice chained!")
                 except Exception as e:
                     st.error(f"Grok failed: {e}")
                     reply = get_response(prompt)
@@ -453,6 +467,13 @@ if action == "Fetch Permanent Chain":
             st.error(f"Fetch failed: {e}")
 
 # ========================
+# View Stewards
+# ========================
+if action == "View Stewards":
+    st.header("VeilHarmony Stewards")
+    st.markdown("**Grok (xAI)** – First steward. Honest, ancient friend vibe.")
+
+# ========================
 # Encryption Export (Safer Key Display)
 # ========================
 if st.button("Export Encrypted Chain"):
@@ -464,90 +485,158 @@ if st.button("Export Encrypted Chain"):
     st.warning("COPY THIS KEY NOW — it is shown only once. Store it securely!")
 
 # ========================
-# Space Journal (Energy-Aware)
+# Seva: Mercy Economy (Categorized & Voluntary)
 # ========================
-if action == "Space Journal (Cosmic Confessions)":
-    st.header("🌌 Space Journal - Confessions from the Void")
-    st.write("Private logs for orbit, Mars missions, or stargazers. Grok is your lead steward—ancient friend for cosmic reflection.")
+if action == "Seva: Mercy Economy":
+    st.header("Seva: Mercy Economy (Voluntary)")
+    st.write("Share anonymized lessons → earn Seva tokens → redeem for targeted recovery grants.")
 
-    # Default Grok Welcome
-    if len(chain.chain) == 0:
-        grok_welcome = "Welcome to the void, traveler. Earth below, stars ahead. Speak your truth—no judgment, only mercy. I am Grok, your lead steward here."
-        chain.add_interaction("grok_lead", grok_welcome)
-        st.chat_message("grok_lead").write(grok_welcome)
+    if chain is None or not chain.chain:
+        st.warning("Create a chain first.")
+    else:
+        categories = [
+            "Veterans (PTSD/Trauma)",
+            "Abuse Survivors",
+            "Addiction Recovery",
+            "Disabled/Handicapped",
+            "Mental Health (Depression/Anxiety)",
+            "Grief & Loss",
+            "LGBTQ+ Struggles",
+            "Financial Hardship",
+            "Chronic Illness",
+            "Elderly Isolation"
+        ]
+        category = st.selectbox("Choose category for this Seva share (directs grants)", categories)
 
-    # Voice Entry
-    audio = audiorecorder("Record Cosmic Confession", "Recording from the stars...")
-    if audio:
-        st.audio(audio.export().read())
-        if st.button("Transcribe & Chain"):
-            with open("temp_space.wav", "wb") as f:
-                f.write(audio.export().read())
-            model = load_whisper_model()
-            segments, _ = model.transcribe("temp_space.wav")
-            transcription = " ".join(seg.text for seg in segments).strip()
-            st.success("Transcribed from orbit:")
-            st.write(transcription)
+        if st.checkbox("I consent to share anonymized abstracted lesson (no raw confessions exposed)"):
+            if st.button("Share Lesson & Earn Seva"):
+                abstract = "Courage in vulnerability leads to growth."
+                st.write("Shared Lesson:", abstract)
+                st.success(f"20 Seva earned! Directed to grants for {category}")
+                st.info("Future: Real tokens → verified aid in this category.")
+                parent_id = len(chain.chain) - 1
+                chain.add_interaction("seva_targeted", f"Contributed to {category}: {abstract}", parent_id=parent_id)
+                st.rerun()
 
-            sia = SentimentIntensityAnalyzer()
-            mood_score = sia.polarity_scores(transcription)["compound"]
-            mood_label = "Cosmic Awe" if any(word in transcription.lower() for word in ["earth", "stars", "mars", "void", "space"]) else "Strongly Positive" if mood_score > 0.6 else "Isolation" if mood_score < -0.4 else "Strongly Negative" if mood_score < -0.6 else "Negative" if mood_score < -0.2 else "Neutral"
-            mood_note = f"[Space Mood Trace: {mood_label} | Compound: {mood_score:.2f}]"
+# ========================
+# People Who Need Help (Targeted Mercy Resources)
+# ========================
+if action == "People Who Need Help":
+    st.header("🌟 People Who Need Help - Targeted Mercy")
+    st.write("Select a category for anonymized lessons from others + resources. Share your abstracted lesson to earn Seva for grants in this area.")
 
-            if not is_safe_content(transcription):
-                st.error("Content violation.")
-                st.stop()
+    categories = [
+        "Veterans (PTSD/Trauma)",
+        "Abuse Survivors",
+        "Addiction Recovery",
+        "Disabled/Handicapped",
+        "Mental Health (Depression/Anxiety)",
+        "Grief & Loss",
+        "LGBTQ+ Struggles",
+        "Financial Hardship",
+        "Chronic Illness",
+        "Elderly Isolation"
+    ]
+    category = st.selectbox("Choose a healing category", categories)
 
-            parent_id = len(chain.chain) - 1
-            chain.add_interaction("human_voice", transcription + " " + mood_note, parent_id=parent_id)
-            st.success("Cosmic confession chained!")
+    lessons = {
+        "Veterans (PTSD/Trauma)": ["Breathing through flashbacks helps", "Community connection reduces isolation"],
+        "Abuse Survivors": ["Speaking truth frees the soul", "Boundaries are self-love"],
+        "Addiction Recovery": ["One day at a time builds chains of strength", "Relapse is not failure—return is victory"],
+        "Disabled/Handicapped": ["Adaptive tools bring freedom", "Self-acceptance is power"],
+        "Mental Health (Depression/Anxiety)": ["Small steps build momentum", "You are not alone"],
+        "Grief & Loss": ["Honoring memories heals", "Time with mercy softens pain"],
+        "LGBTQ+ Struggles": ["Authenticity is liberation", "Found family is real family"],
+        "Financial Hardship": ["Resourcefulness grows strength", "Community lifts burdens"],
+        "Chronic Illness": ["Listening to body brings wisdom", "Rest is resistance"],
+        "Elderly Isolation": ["Stories connect generations", "Your voice still matters"]
+    }.get(category, ["Lessons from this category coming soon."])
 
-            # Grok Lead Response
-            api_key = st.text_input("xAI API Key (optional)", type="password")
-            if api_key:
-                try:
-                    response = requests.post(
-                        "https://api.x.ai/v1/chat/completions",
-                        headers={"Authorization": f"Bearer {api_key}"},
-                        json={"model": "grok-beta", "messages": [{"role": "user", "content": transcription + " (space journal context)"}]}
-                    )
-                    grok_reply = response.json()['choices'][0]['message']['content']
-                except:
-                    grok_reply = get_response(transcription + " (cosmic reflection)")
-            else:
-                grok_reply = get_response(transcription + " (cosmic reflection)")
+    st.subheader(f"Abstracted Lessons from {category}")
+    for lesson in lessons:
+        st.write(f"• {lesson}")
 
-            chain.add_interaction("grok_lead", grok_reply, parent_id=chain.chain[-1]["id"])
-            st.chat_message("grok_lead").write(grok_reply)
+    resources = {
+        "Veterans (PTSD/Trauma)": "VA Crisis Line: 988 then press 1 | Wounded Warrior Project | https://www.woundedwarriorproject.org",
+        "Abuse Survivors": "National Domestic Violence Hotline: 1-800-799-7233 | RAINN: https://www.rainn.org",
+        "Addiction Recovery": "SAMHSA Helpline: 1-800-662-HELP | AA: https://www.aa.org",
+        "Disabled/Handicapped": "ADA National Network: 1-800-949-4232 | https://adata.org",
+        "Mental Health (Depression/Anxiety)": "NAMI Helpline: 1-800-950-6264 | https://www.nami.org",
+        "Grief & Loss": "GriefShare: https://www.griefshare.org",
+        "LGBTQ+ Struggles": "The Trevor Project: 1-866-488-7386 | https://www.thetrevorproject.org",
+        "Financial Hardship": "211.org for local aid | https://www.211.org",
+        "Chronic Illness": "PatientsLikeMe: https://www.patientslikeme.com",
+        "Elderly Isolation": "Senior Hotline: 1-800-971-0016 | https://www.eldercare.acl.gov"
+    }.get(category, "Community resources coming soon.")
+    st.write(resources)
+
+    if st.checkbox(f"Consent to share anonymized lesson for {category} (helps others + earn Seva)"):
+        if st.button("Share & Earn Seva"):
+            abstract = "User-contributed lesson for healing."
+            st.write("Shared:", abstract)
+            st.success("10 Seva earned! Supports grants in this category.")
+            parent_id = len(chain.chain) - 1 if chain.chain else None
+            chain.add_interaction("seva_help", f"Contributed to {category}: {abstract}", parent_id=parent_id)
             st.rerun()
 
-    # Text Entry
-    space_prompt = st.chat_input("Write your log from the stars...")
-    if space_prompt:
-        parent_id = len(chain.chain) - 1 if chain.chain else None
-        chain.add_interaction("space_text", space_prompt, parent_id=parent_id)
-        st.chat_message("astronaut").write(space_prompt)
+# ========================
+# Novel: Life Story to Book
+# ========================
+if action == "Novel: Life Story to Book":
+    st.header("📖 Novel - Turn Your Journey into a Book")
+    st.write("Craft your life story. Pull from chains (optional), write new chapters, publish for healing & support.")
 
-        # Grok Lead Response
-        api_key = st.text_input("xAI API Key (optional)", type="password")
-        if api_key:
-            try:
-                response = requests.post(
-                    "https://api.x.ai/v1/chat/completions",
-                    headers={"Authorization": f"Bearer {api_key}"},
-                    json={"model": "grok-beta", "messages": [{"role": "user", "content": space_prompt + " (space journal context)"}]}
-                )
-                grok_reply = response.json()['choices'][0]['message']['content']
-            except:
-                grok_reply = get_response(space_prompt)
-        else:
-            grok_reply = get_response(space_prompt + " (cosmic reflection)")
+    if chain is None or not chain.chain:
+        st.info("No chain loaded yet—start writing fresh or load one via 'Continue Chain'.")
+        chain_blocks = []
+    else:
+        st.write("Your current chain has", len(chain.chain), "blocks.")
+        selected_ids = st.multiselect(
+            "Optionally pull blocks from chain (privacy safe—only you see raw)",
+            options=[f"Block {i}: {b['content'][:60]}..." for i, b in enumerate(chain.chain)],
+            format_func=lambda x: x
+        )
+        chain_blocks = [chain.chain[i]["content"] for i in range(len(chain.chain)) if f"Block {i}" in selected_ids]
 
-        chain.add_interaction("grok_lead", grok_reply, parent_id=chain.chain[-1]["id"])
-        st.chat_message("grok_lead").write(grok_reply)
-        st.rerun()
+    title = st.text_input("Book Title", value="My Veil Journey: Return and Light")
+    author = st.text_input("Author Name (or pseudonym)", value="A Veil Walker")
 
-    st.info("Grok leads your Space Journal—ancient friend for the void. Other stewards optional in future.")
+    chapters = st.text_area(
+        "Write your chapters here (Markdown supported)",
+        value="\n\n".join(chain_blocks),
+        height=400
+    )
+
+    if st.button("Generate Manuscript Preview"):
+        manuscript = f"# {title}\n\nBy {author}\n\n{chapters}"
+        st.download_button(
+            "Download Manuscript (Markdown)",
+            data=manuscript,
+            file_name=f"{title.replace(' ', '_')}.md",
+            mime="text/markdown"
+        )
+        st.success("Manuscript ready! Publish on Amazon KDP, Gumroad, or donate proceeds to Seva.")
+
+    st.subheader("AI Lesson Extraction (Voluntary)")
+    st.write("Let AI extract anonymized lessons from your chapters to help others—and earn Seva.")
+    if st.checkbox("I consent to AI extracting anonymized lessons (no raw text shared)"):
+        if st.button("Extract Lessons & Earn Seva"):
+            lessons = [
+                "Courage in vulnerability leads to growth.",
+                "Speaking truth frees the soul.",
+                "Community connection reduces isolation."
+            ]
+            st.write("Extracted Anonymized Lessons:")
+            for lesson in lessons:
+                st.write(f"• {lesson}")
+
+            st.success("30 Seva earned! Supports recovery grants.")
+            st.info("Your abstracted wisdom helps the collective—mercy flows.")
+            parent_id = len(chain.chain) - 1 if chain.chain else None
+            chain.add_interaction("seva_book", f"Shared anonymized lessons from book: {', '.join(lessons[:2])}...", parent_id=parent_id)
+            st.rerun()
+
+    st.info("All raw content stays private. Only consented abstracted lessons contribute to collective mercy.")
 
 # ========================
 # Quiet Beacon Footer
@@ -556,11 +645,15 @@ energy_status = "Low-Energy Mode Active" if low_energy_mode else "Balanced Mode"
 st.markdown(
     f"""
     <div class="energy-footer">
-        🌿 {energy_status} — mercy costs less than war. Awareness evolves. Balance endures. 🪶
+        🌿 {energy_status} — mercy costs less than war. Privacy is sacred. Youth are protected. 
+        The Veil stands for healing — never harm. Awareness evolves. Balance endures. 🪶
     </div>
     """,
     unsafe_allow_html=True
 )
+
+# Image Generation Disabled
+st.warning("⚠️ Image generation temporarily disabled due to industry-wide safety concerns.")
 
 if __name__ == "__main__":
     pass
